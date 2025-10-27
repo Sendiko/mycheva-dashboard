@@ -1,0 +1,68 @@
+
+export default {
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: "#fef9ee",
+          100: "#fdf1d7",
+          200: "#fae6ae",
+          300: "#f7c67a",
+          400: "#f3a444",
+          500: "#ef8619",
+          600: "#e16f15",
+          700: "#ba5514",
+          800: "#943816",
+          900: "#783916",
+          950: "#401a0a",
+        },
+        success: "#00C247",
+        info: "#004CE8",
+        warning: "#FFEB1A",
+        error: "#BA1A1A",
+        disabled: "#DBDBDB",
+        "dis-button": "#879AC1",
+        gray: {
+          900: "#212121",
+          800: "#424242",
+          700: "#616161",
+          600: "#757575",
+          500: "#9E9E9E",
+          400: "#BDBDBD",
+          300: "#E0E0E0",
+          200: "#EEEEEE",
+          100: "#F5F5F5",
+          50: "#FFFFFF",
+        },
+      },
+      fontFamily: {
+        sans: ["Poppins", "sans-serif"],
+      },
+      fontWeight: {
+        bold: "700",
+        semibold: "600",
+        medium: "500",
+        regular: "400",
+      },
+      fontSize: {
+        h1: ["48px", { fontWeight: "700", lineHeight: "1.2" }],
+        h2: ["40px", { fontWeight: "700", lineHeight: "1.2" }],
+        h3: ["32px", { fontWeight: "700", lineHeight: "1.2" }],
+        h4: ["24px", { fontWeight: "700", lineHeight: "1.3" }],
+        h5: ["20px", { fontWeight: "700", lineHeight: "1.3" }],
+        h6: ["18px", { fontWeight: "700", lineHeight: "1.3" }],
+        "body-xl": ["18px", { lineHeight: "1.6" }],
+        "body-lg": ["16px", { lineHeight: "1.6" }],
+        "body-md": ["14px", { lineHeight: "1.6" }],
+        "body-sm": ["12px", { lineHeight: "1.6" }],
+        "body-xs": ["10px", { lineHeight: "1.6" }],
+      },
+    },
+  },
+  plugins: [],
+};

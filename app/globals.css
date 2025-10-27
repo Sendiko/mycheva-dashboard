@@ -1,26 +1,69 @@
+/* app/globals.css */
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /*
+  ==========================================
+  1. Colors (from your 'Colors' image)
+  ==========================================
+  */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Primary Scale */
+  --color-primary-50: #FFF8F0;
+  --color-primary-100: #FEEBD7;
+  --color-primary-200: #FDD6B0;
+  --color-primary-300: #FCC48A;
+  --color-primary-400: #FBAE67;
+  --color-primary-500: #FA9A44;
+  --color-primary-600: #F98825;
+  --color-primary-700: #E57618;
+  --color-primary-800: #CC6410;
+  --color-primary-900: #B8540E;
+  --color-primary-950: #A34A0B;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+  /* Alert & Status */
+  --color-success: #03C247;
+  --color-info: #0C60E9;
+  --color-warning: #FFDE0A;
+  --color-error: #EB4A4A;
+  --color-disabled-bg: #DEDEDE;    /* Renamed from 'Disabled' for clarity */
+  --color-disabled-btn: #B7BACC; /* Renamed from 'Dis. Button' */
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Text & Background (using 'neutral' as the name) */
+  --color-neutral-50: #FAFAFA;
+  --color-neutral-100: #F5F5F5;
+  --color-neutral-200: #EEEEEE;
+  --color-neutral-300: #E0E0E0;
+  --color-neutral-400: #BDBDBD;
+  --color-neutral-500: #9E9E9E;
+  --color-neutral-600: #757575;
+  --color-neutral-700: #616161;
+  --color-neutral-800: #424242;
+  --color-neutral-900: #212121;
+
+  /*
+  ==========================================
+  2. Typography (from your 'Typography' image)
+  ==========================================
+  */
+
+  /* Set the default font family to the Poppins variable from layout.tsx */
+  --font-sans: var(--font-poppins);
+
+  /* Custom Font Sizes */
+  /* This creates: text-h1, text-h2, etc. */
+  --font-size-h1: 58px;
+  --font-size-h2: 46px;
+  --font-size-h3: 34px;
+  --font-size-h4: 24px;
+  --font-size-h5: 20px;
+  --font-size-h6: 16px;
+
+  /* This creates: text-body-xl, text-body-lg, etc. */
+  --font-size-body-xl: 18px;
+  --font-size-body-lg: 16px;
+  --font-size-body-md: 14px;
+  --font-size-body-sm: 12px;
+  --font-size-body-xs: 10px;
 }
