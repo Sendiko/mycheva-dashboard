@@ -38,6 +38,12 @@ type Announcement = {
 
 // --- Announcement Card Component (Updated) ---
 const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
+  
+  // --- NEW: Construct the full image URL ---
+  const fullImageUrl = announcement.imageUrl
+    ? `https://my-cheva-api.kakashispiritnews.my.id/public/${announcement.imageUrl}`
+    : null;
+
   return (
     <div className="w-full bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden mb-6">
       {/* --- Card Header --- */}
@@ -90,17 +96,17 @@ const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
         </h3>
 
         {/* Conditionally render the image if it exists */}
-        {announcement.imageUrl && (
+        {fullImageUrl && ( // <-- Use the new full URL
           <div className="relative w-full h-64 mb-4 rounded-lg overflow-hidden">
             {/* --- PREVIEW FIX --- (Using <img> tag) */}
             <img
-              src={announcement.imageUrl}
+              src={fullImageUrl} // <-- Use the new full URL
               alt={announcement.title}
               className="w-full h-full object-cover"
             />
             {/* --- ORIGINAL CODE for your Next.js project ---
             <Image
-              src={announcement.imageUrl}
+              src={fullImageUrl} // <-- Use the new full URL
               alt={announcement.title}
               layout="fill"
               className="object-cover"
