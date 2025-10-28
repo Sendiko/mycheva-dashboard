@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "my-cheva-api.kakashispiritnews.my.id",
         port: "", // You can leave this empty for default ports
-        pathname: "/public/photos/**", // This allows any image in this path
+        pathname: "/public/**", // This allows any image in this path
       },
       {
         protocol: "https",
