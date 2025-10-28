@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react'; // <-- Import useCallback
-import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
+import React, { useState, useEffect, useCallback } from 'react';
+// import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
 
 // --- Helper function to format the date ---
 const formatDate = (dateString: string) => {
@@ -20,7 +20,7 @@ const formatDate = (dateString: string) => {
   }
 };
 
-// --- NEW: Data Structure from API ---
+// --- Data Structure from API ---
 type Announcement = {
   id: number;
   title: string;
@@ -37,17 +37,42 @@ type Announcement = {
 };
 
 // --- Announcement Card Component (Updated) ---
-const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
+const AnnouncementCard = ({ 
+  announcement,
+  onImageClick // <-- NEW: Prop to handle image click
+}: { 
+  announcement: Announcement,
+  onImageClick: (url: string) => void
+}) => {
   
-  // --- NEW: Construct the full image URL ---
+  // --- Construct the full image URL (FIXED) ---
   const fullImageUrl = announcement.imageUrl
-    ? `https://my-cheva-api.kakashispiritnews.my.id/public${announcement.imageUrl}`
+    // Remove any leading slashes from imageUrl to prevent double slashes
+    ? `https://my-cheva-api.kakashispiritnews.my.id/public/${announcement.imageUrl.replace(/^\//, '')}`
     : null;
 
   return (
-    <div className="w-full bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden mb-6">
+    <div className="w-full bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
       {/* --- Card Header --- */}
       <div className="flex items-center space-x-4 p-6">
+        {/* --- PREVIEW FIX ---
+          The <Image> component is replaced with a standard <img> tag
+          for the preview. In your local Next.js project,
+          you should use the original <Image> component code below.
+        ----------------------*/}
+        <img
+          src={announcement.user.profileUrl}
+          alt={announcement.user.UserDatum.fullName}
+          width={48}
+          height={48}
+          className="rounded-full object-cover h-12 w-12"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.onerror = null; // prevent infinite loop
+            target.src = `https://placehold.co/48x48/DEDEDE/424242?text=${announcement.user.UserDatum.fullName.charAt(0)}`;
+          }}
+        />
+        {/* --- ORIGINAL CODE for your Next.js project ---
         <Image
           src={announcement.user.profileUrl}
           alt={announcement.user.UserDatum.fullName}
@@ -60,6 +85,7 @@ const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
             target.src = `https://placehold.co/48x48/DEDEDE/424242?text=${announcement.user.UserDatum.fullName.charAt(0)}`;
           }}
         />
+        ---------------------------------------------- */}
         <div>
           <h2 className="font-bold text-body-lg text-neutral-900">
             {announcement.user.UserDatum.fullName}
@@ -78,14 +104,31 @@ const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
 
         {/* Conditionally render the image if it exists */}
         {fullImageUrl && ( // <-- Use the new full URL
-          <div className="relative w-full h-64 mb-4 rounded-lg overflow-hidden">
+          <button // <-- Changed to button for accessibility
+            className="relative w-full h-64 mb-4 rounded-lg overflow-hidden cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary-500 ring-offset-2"
+            onClick={() => onImageClick(fullImageUrl)} // <-- NEW: onClick handler
+          >
+            {/* --- PREVIEW FIX --- (Using <img> tag) */}
+            <img
+              src={fullImageUrl} // <-- Use the new full URL
+              alt={announcement.title}
+              className="w-full h-full object-cover"
+            />
+            {/* --- ORIGINAL CODE for your Next.js project ---
             <Image
               src={fullImageUrl} // <-- Use the new full URL
               alt={announcement.title}
               layout="fill"
               className="object-cover"
             />
-          </div>
+            ---------------------------------------------- */}
+            {/* --- NEW: Hover Overlay --- */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+              <span className="text-white bg-black/50 px-3 py-1 rounded-md text-sm">
+                View Full Size
+              </span>
+            </div>
+          </button>
         )}
 
         {/* Render the content. 
@@ -175,7 +218,7 @@ const AddAnnouncementModal = ({
     formData.append('content', content);
     formData.append('userId', userId);
     if (selectedFile) {
-      formData.append('file', selectedFile); // 'image' is the key your API expects
+      formData.append('image', selectedFile); // 'image' is the key your API expects
     }
 
     try {
@@ -325,19 +368,351 @@ const AddAnnouncementModal = ({
   );
 };
 
+// --- NEW: EditAnnouncementModal Component ---
+const EditAnnouncementModal = ({
+  isOpen,
+  onClose,
+  token,
+  onAnnouncementUpdated,
+  announcement,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  token: string | null;
+  onAnnouncementUpdated: () => void;
+  announcement: Announcement;
+}) => {
+  const [title, setTitle] = useState(announcement.title);
+  const [content, setContent] = useState(announcement.content);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Update state if the prop changes
+  useEffect(() => {
+    if (announcement) {
+      setTitle(announcement.title);
+      setContent(announcement.content);
+    }
+  }, [announcement]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    } else {
+      setSelectedFile(null);
+    }
+  };
+
+  // Handle form submission for EDIT (PUT)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !content) {
+      setError('Title and content are required.');
+      setSuccessMessage(null);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    if (selectedFile) {
+      formData.append('image', selectedFile);
+    }
+
+    try {
+      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/announcement/${announcement.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.status !== 200) {
+        throw new Error(data.message || 'Failed to update announcement');
+      }
+
+      setSuccessMessage('Announcement updated successfully!');
+      onAnnouncementUpdated();
+      
+      setTimeout(() => {
+        handleClose();
+      }, 1500);
+
+    } catch (err) {
+      setError((err as Error).message);
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    setError(null);
+    setSuccessMessage(null);
+    setIsSubmitting(false);
+    setSelectedFile(null);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-h4 text-neutral-900">Edit Announcement</h2>
+          <button onClick={handleClose} className="text-neutral-500 hover:text-neutral-800">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Title */}
+          <div>
+            <label htmlFor="edit-title" className="block text-body-md font-semibold text-neutral-800 mb-2">
+              Title
+            </label>
+            <input
+              id="edit-title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 placeholder-neutral-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+            />
+          </div>
+
+          {/* Content */}
+          <div>
+            <label htmlFor="edit-content" className="block text-body-md font-semibold text-neutral-800 mb-2">
+              Content
+            </label>
+            <textarea
+              id="edit-content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={6}
+              className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 placeholder-neutral-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+            />
+          </div>
+
+          {/* File Upload */}
+          <div>
+            <label htmlFor="edit-image" className="block text-body-md font-semibold text-neutral-800 mb-2">
+              Replace Image (Optional)
+            </label>
+            <input
+              id="edit-image"
+              type="file"
+              onChange={handleFileChange}
+              accept="image/png, image/jpeg, image/gif"
+              className="w-full text-sm text-neutral-700
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-lg file:border-0
+                file:text-sm file:font-semibold
+                file:bg-primary-50 file:text-primary-700
+                hover:file:bg-primary-100 transition-colors"
+            />
+            {selectedFile && (
+              <p className="text-sm text-neutral-600 mt-2">
+                New file: {selectedFile.name}
+              </p>
+            )}
+          </div>
+          
+          {/* Feedback */}
+          {error && (
+            <p className="text-body-md text-error p-3 bg-error/10 rounded-lg">
+              {error}
+            </p>
+          )}
+          {successMessage && (
+            <p className="text-body-md text-success p-3 bg-success/10 rounded-lg">
+              {successMessage}
+            </p>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="rounded-lg bg-neutral-200 py-2 px-4 font-semibold text-body-md text-neutral-800 hover:bg-neutral-300 transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="rounded-lg bg-primary-500 py-2 px-4 font-semibold text-body-md text-white shadow-sm hover:bg-primary-600 transition-all disabled:opacity-50"
+            >
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// --- NEW: DeleteConfirmationModal Component ---
+const DeleteConfirmationModal = ({
+  isOpen,
+  onClose,
+  token,
+  onAnnouncementDeleted,
+  announcement,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  token: string | null;
+  onAnnouncementDeleted: () => void;
+  announcement: Announcement;
+}) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Handle DELETE request
+  const handleDelete = async () => {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // NOTE: Following your attendance pattern of sending ID in the body
+      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/announcement/${announcement.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          announcementId: announcement.id,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.status !== 200) {
+        throw new Error(data.message || 'Failed to delete announcement');
+      }
+
+      // Success
+      onAnnouncementDeleted(); // Refresh the table
+      handleClose(); // Close the modal
+
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    setError(null);
+    setIsSubmitting(false);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+        <h2 className="text-h4 text-neutral-900 mb-4">Confirm Deletion</h2>
+        <p className="text-body-md text-neutral-700 mb-6">
+          Are you sure you want to delete the announcement titled:
+          <strong className="text-neutral-900"> "{announcement.title}"</strong>?
+          This action cannot be undone.
+        </p>
+
+        {error && (
+          <p className="text-body-md text-error p-3 bg-error/10 rounded-lg mb-4">
+            {error}
+          </p>
+        )}
+
+        <div className="flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={isSubmitting}
+            className="rounded-lg bg-neutral-200 py-2 px-4 font-semibold text-body-md text-neutral-800 hover:bg-neutral-300 transition-all disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isSubmitting}
+            className="rounded-lg bg-error py-2 px-4 font-semibold text-body-md text-white shadow-sm hover:bg-error/90 transition-all disabled:opacity-50"
+          >
+            {isSubmitting ? 'Deleting...' : 'Delete'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// --- NEW: FullScreenImageModal Component ---
+const FullScreenImageModal = ({ imageUrl, onClose }: { imageUrl: string, onClose: () => void }) => {
+  return (
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={onClose} // Click background to close
+    >
+      <button 
+        className="absolute top-4 right-4 text-white/70 hover:text-white"
+        onClick={onClose}
+        title="Close"
+      >
+        <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      
+      <div 
+        className="relative max-w-full max-h-full"
+        onClick={(e) => e.stopPropagation()} // Prevent click on image from closing
+      >
+        <img 
+          src={imageUrl} 
+          alt="Full size announcement" 
+          className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" 
+        />
+      </div>
+    </div>
+  );
+};
+
+
 // --- Main Announcements Page (Updated) ---
 export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null); // <-- NEW: State for userId
-  const [isModalOpen, setIsModalOpen] = useState(false); // <-- NEW: State for modal
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [fullScreenImageUrl, setFullScreenImageUrl] = useState<string | null>(null);
+  
+  // --- NEW: State for Edit/Delete Modals ---
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
 
   // Get token and userId on mount
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
-    const storedUserId = localStorage.getItem('userId'); // <-- NEW: Get userId
+    const storedUserId = localStorage.getItem('userId');
 
     if (!storedToken || !storedUserId) {
       setError('You are not authenticated.');
@@ -349,18 +724,17 @@ export default function AnnouncementsPage() {
       return;
     }
     setToken(storedToken);
-    setUserId(storedUserId); // <-- NEW: Set userId
+    setUserId(storedUserId);
   }, []);
 
   // --- Wrapped fetch in useCallback ---
   const fetchAnnouncements = useCallback(async () => {
     if (!token) {
-      // setError('You are not authenticated.'); // This check is now redundant
-      // setIsLoading(false);
       return;
     }
     
-    setIsLoading(true);
+    // Don't show loading spinner on refresh, only on initial load
+    // setIsLoading(true); 
     setError(null);
     try {
       const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/announcement', {
@@ -383,7 +757,7 @@ export default function AnnouncementsPage() {
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Only stop loading on initial load
     }
   }, [token]); // <-- Dependency array
 
@@ -393,6 +767,17 @@ export default function AnnouncementsPage() {
       fetchAnnouncements();
     }
   }, [token, fetchAnnouncements]); // <-- Add fetchAnnouncements here
+
+  // --- NEW: Handlers to open modals ---
+  const handleOpenEditModal = (announcement: Announcement) => {
+    setSelectedAnnouncement(announcement);
+    setIsEditModalOpen(true);
+  };
+
+  const handleOpenDeleteModal = (announcement: Announcement) => {
+    setSelectedAnnouncement(announcement);
+    setIsDeleteModalOpen(true);
+  };
 
   return (
     <div>
@@ -427,7 +812,40 @@ export default function AnnouncementsPage() {
           </div>
         ) : (
           announcements.map((item) => (
-            <AnnouncementCard key={item.id} announcement={item} />
+            // --- NEW: Flex wrapper for card + actions ---
+            <div key={item.id} className="relative flex items-start space-x-3 mb-6">
+              {/* Card takes up most of the space */}
+              <div className="flex-1">
+                <AnnouncementCard 
+                  announcement={item} 
+                  onImageClick={setFullScreenImageUrl} // <-- NEW: Pass handler
+                />
+              </div>
+              
+              {/* Actions: Conditionally rendered */}
+              {userId && item.user.id === Number(userId) && (
+                <div className="flex flex-col space-y-2 pt-6">
+                  <button
+                    onClick={() => handleOpenEditModal(item)}
+                    title="Edit"
+                    className="text-neutral-500 hover:text-primary-600 transition-colors p-2 rounded-full hover:bg-neutral-100"
+                  >
+                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleOpenDeleteModal(item)}
+                    title="Delete"
+                    className="text-neutral-500 hover:text-error transition-colors p-2 rounded-full hover:bg-neutral-100"
+                  >
+                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
           ))
         )}
       </div>
@@ -440,6 +858,34 @@ export default function AnnouncementsPage() {
         userId={userId}
         onAnnouncementAdded={fetchAnnouncements}
       />
+
+      {/* --- NEW: Render the Full Screen Image Overlay --- */}
+      {fullScreenImageUrl && (
+        <FullScreenImageModal 
+          imageUrl={fullScreenImageUrl} 
+          onClose={() => setFullScreenImageUrl(null)}
+        />
+      )}
+
+      {/* --- NEW: Render Edit/Delete Modals --- */}
+      {selectedAnnouncement && (
+        <EditAnnouncementModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          token={token}
+          onAnnouncementUpdated={fetchAnnouncements}
+          announcement={selectedAnnouncement}
+        />
+      )}
+      {selectedAnnouncement && (
+        <DeleteConfirmationModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          token={token}
+          onAnnouncementDeleted={fetchAnnouncements}
+          announcement={selectedAnnouncement}
+        />
+      )}
     </div>
   );
 }
