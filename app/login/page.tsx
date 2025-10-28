@@ -40,7 +40,8 @@ export default function LoginPage() {
         setSuccess(data.message || 'Login successful!');
         
         // 1. Save the token
-        localStorage.setItem('token', data.token); 
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.user.id);
         
         // 2. Redirect to dashboard
         // We add a small delay so the user can see the success message
