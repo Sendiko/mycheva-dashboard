@@ -79,20 +79,12 @@ const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
         {/* Conditionally render the image if it exists */}
         {fullImageUrl && ( // <-- Use the new full URL
           <div className="relative w-full h-64 mb-4 rounded-lg overflow-hidden">
-            {/* --- PREVIEW FIX --- (Using <img> tag) */}
-            <img
-              src={fullImageUrl} // <-- Use the new full URL
-              alt={announcement.title}
-              className="w-full h-full object-cover"
-            />
-            {/* --- ORIGINAL CODE for your Next.js project ---
             <Image
               src={fullImageUrl} // <-- Use the new full URL
               alt={announcement.title}
               layout="fill"
               className="object-cover"
             />
-            ---------------------------------------------- */}
           </div>
         )}
 
