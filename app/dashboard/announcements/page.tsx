@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react'; // <-- Import useCallback
-// import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
+import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
 
 // --- Helper function to format the date ---
 const formatDate = (dateString: string) => {
@@ -48,24 +48,6 @@ const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
     <div className="w-full bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden mb-6">
       {/* --- Card Header --- */}
       <div className="flex items-center space-x-4 p-6">
-        {/* --- PREVIEW FIX ---
-          The <Image> component is replaced with a standard <img> tag
-          for the preview. In your local Next.js project,
-          you should use the original <Image> component code below.
-        ----------------------*/}
-        <img
-          src={announcement.user.profileUrl}
-          alt={announcement.user.UserDatum.fullName}
-          width={48}
-          height={48}
-          className="rounded-full object-cover h-12 w-12"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.onerror = null; // prevent infinite loop
-            target.src = `https://placehold.co/48x48/DEDEDE/424242?text=${announcement.user.UserDatum.fullName.charAt(0)}`;
-          }}
-        />
-        {/* --- ORIGINAL CODE for your Next.js project ---
         <Image
           src={announcement.user.profileUrl}
           alt={announcement.user.UserDatum.fullName}
@@ -78,7 +60,6 @@ const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
             target.src = `https://placehold.co/48x48/DEDEDE/424242?text=${announcement.user.UserDatum.fullName.charAt(0)}`;
           }}
         />
-        ---------------------------------------------- */}
         <div>
           <h2 className="font-bold text-body-lg text-neutral-900">
             {announcement.user.UserDatum.fullName}
