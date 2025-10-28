@@ -41,7 +41,7 @@ const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
   
   // --- NEW: Construct the full image URL ---
   const fullImageUrl = announcement.imageUrl
-    ? `https://my-cheva-api.kakashispiritnews.my.id/public/${announcement.imageUrl}`
+    ? `https://my-cheva-api.kakashispiritnews.my.id/public${announcement.imageUrl}`
     : null;
 
   return (
