@@ -1,5 +1,6 @@
 'use client'; // <-- Convert to Client Component
 
+import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 // import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
 
@@ -599,6 +600,7 @@ const DeleteConfirmationModal = ({
 
 
 export default function AttendancesPage() {
+  const router = useRouter();
   // --- State for data, loading, and errors ---
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -660,7 +662,7 @@ export default function AttendancesPage() {
       setError('You are not authenticated.');
       setIsLoading(false);
       // Maybe redirect to login here
-      // router.push('/login');
+      router.push('/login');
       return;
     }
     setToken(storedToken);
@@ -692,7 +694,9 @@ export default function AttendancesPage() {
     // 2. Sort data based on sort config
     if (sortConfig.key) {
       filteredData.sort((a, b) => {
+        // @ts-ignore
         const aValue = getNestedValue(a, sortConfig.key);
+        // @ts-ignore
         const bValue = getNestedValue(b, sortConfig.key);
         
         let comparison = 0;
