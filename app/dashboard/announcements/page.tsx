@@ -123,7 +123,7 @@ const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
   );
 };
 
-// --- NEW: AddAnnouncementModal Component ---
+// --- AddAnnouncementModal Component (with File Upload) ---
 const AddAnnouncementModal = ({
   isOpen,
   onClose,
@@ -139,9 +139,18 @@ const AddAnnouncementModal = ({
 }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // <-- NEW: State for file
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    } else {
+      setSelectedFile(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,18 +169,23 @@ const AddAnnouncementModal = ({
     setError(null);
     setSuccessMessage(null);
 
+    // --- NEW: Use FormData to send file and text ---
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    formData.append('userId', userId);
+    if (selectedFile) {
+      formData.append('image', selectedFile); // 'image' is the key your API expects
+    }
+
     try {
       const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/announcement', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          // 'Content-Type': 'multipart/form-data' is set automatically by browser with FormData
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          title,
-          content,
-          userId: Number(userId),
-        }),
+        body: formData, // <-- Send FormData instead of JSON
       });
 
       const data = await response.json();
@@ -196,6 +210,7 @@ const AddAnnouncementModal = ({
   const handleClose = () => {
     setTitle('');
     setContent('');
+    setSelectedFile(null); // <-- NEW: Reset file
     setError(null);
     setSuccessMessage(null);
     setIsSubmitting(false);
@@ -249,6 +264,30 @@ const AddAnnouncementModal = ({
               className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 placeholder-neutral-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
             />
           </div>
+
+          {/* --- NEW: File Upload --- */}
+          <div>
+            <label htmlFor="image" className="block text-body-md font-semibold text-neutral-800 mb-2">
+              Image (Optional)
+            </label>
+            <input
+              id="image"
+              type="file"
+              onChange={handleFileChange}
+              accept="image/png, image/jpeg, image/gif"
+              className="w-full text-sm text-neutral-700
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-lg file:border-0
+                file:text-sm file:font-semibold
+                file:bg-primary-50 file:text-primary-700
+                hover:file:bg-primary-100 transition-colors"
+            />
+            {selectedFile && (
+              <p className="text-sm text-neutral-600 mt-2">
+                File selected: {selectedFile.name}
+              </p>
+            )}
+          </div>
           
           {/* Feedback Messages */}
           {error && (
@@ -285,7 +324,6 @@ const AddAnnouncementModal = ({
     </div>
   );
 };
-
 
 // --- Main Announcements Page (Updated) ---
 export default function AnnouncementsPage() {
