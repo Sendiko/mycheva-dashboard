@@ -44,7 +44,7 @@ jobs:
           port: ${{ secrets.SSH_PORT || 2222 }} 
           script: |
             cd mycheva-dashboard/
-            git pull origin master 
+            git pull origin deployment 
             npm install --omit=dev 
             npm run build 
             pm2 restart mycheva
