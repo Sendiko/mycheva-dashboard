@@ -13,6 +13,7 @@ const menuItems = [
   { name: 'Roadmap', href: '/dashboard/roadmap', icon: '🗺️' },
   { name: 'Discussion Forum', href: '/dashboard/discussion', icon: '💬' },
   { name: 'Meetings', href: '/dashboard/meetings', icon: '🤝' }, // <-- Added icon
+  { name: 'User', href: '/dashboard/profile', icon: '👤' },
   { name: 'Profile', href: '/dashboard/profile', icon: '👤' },
 ];
 
