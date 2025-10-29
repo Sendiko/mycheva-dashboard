@@ -12,6 +12,7 @@ const menuItems = [
   { name: 'Announcements', href: '/dashboard/announcements', icon: '📢' },
   { name: 'Roadmap', href: '/dashboard/roadmap', icon: '🗺️' },
   { name: 'Discussion Forum', href: '/dashboard/discussion', icon: '💬' },
+  { name: 'Meetings', href: '/dashboard/meetings', icon: '🤝' }, // <-- Added icon
   { name: 'Profile', href: '/dashboard/profile', icon: '👤' },
 ];
 
