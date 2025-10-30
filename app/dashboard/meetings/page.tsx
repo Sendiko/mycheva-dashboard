@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import QRCode from 'react-qr-code';
 
 // --- Helper function to format the date ---
 const formatDate = (dateString: string) => {
@@ -375,6 +376,94 @@ const AddMeetingModal = ({
             </div>
           </form>
         )}
+      </div>
+    </div>
+  );
+};
+
+// --- QrModal: Uses react-qr-code to render an SVG QR and offers PNG download ---
+const QrModal = ({
+  isOpen,
+  onClose,
+  meeting,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  meeting: Meeting;
+}) => {
+  const [isGenerating, setIsGenerating] = React.useState(false);
+  if (!isOpen || !meeting) return null;
+
+  const downloadPng = async () => {
+    try {
+      setIsGenerating(true);
+      const wrapperId = `qr-wrapper-${meeting.id}`;
+      const wrapper = document.getElementById(wrapperId);
+      if (!wrapper) return;
+      const svg = wrapper.querySelector('svg') as SVGSVGElement | null;
+      if (!svg) return;
+
+      const serializer = new XMLSerializer();
+      let svgString = serializer.serializeToString(svg);
+      if (!svgString.match(/^<svg[^>]+xmlns="http:\/\/www.w3.org\/2000\/svg"/)) {
+        svgString = svgString.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const size = 300;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, size, size);
+          ctx.drawImage(img, 0, 0, size, size);
+          const pngData = canvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = pngData;
+          a.download = `meeting-${meeting.id}-qr.png`;
+          a.click();
+        }
+        URL.revokeObjectURL(url);
+        setIsGenerating(false);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        setIsGenerating(false);
+      };
+      img.src = url;
+    } catch (err) {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl my-8 text-center">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-h4 text-neutral-900">Meeting QR Code</h2>
+          <button onClick={onClose} className="text-neutral-500 hover:text-neutral-800">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="py-4">
+          <div id={`qr-wrapper-${meeting.id}`} className="mx-auto mb-4 flex items-center justify-center">
+            <QRCode value={meeting.id.toString()} size={300} />
+          </div>
+          <p className="text-body-sm text-neutral-700 mb-4">Scan to open meeting details</p>
+          <div className="flex justify-center space-x-3">
+            <button onClick={downloadPng} disabled={isGenerating} className={`rounded-lg py-2 px-4 font-semibold text-body-md text-white shadow-sm transition-all ${isGenerating ? 'bg-neutral-200 text-neutral-600' : 'bg-primary-500 hover:bg-primary-600'}`}>
+              {isGenerating ? 'Preparing...' : 'Download'}
+            </button>
+            <button onClick={onClose} className="rounded-lg bg-neutral-200 py-2 px-4 font-semibold text-body-md text-neutral-800 hover:bg-neutral-300 transition-all">Close</button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -882,6 +971,7 @@ export default function MeetingsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
 
 
   // --- Refactored fetchMeetings ---
@@ -1024,6 +1114,11 @@ export default function MeetingsPage() {
   const handleOpenViewModal = (item: Meeting) => {
     setSelectedMeeting(item);
     setIsViewModalOpen(true);
+  };
+
+  const handleOpenQrModal = (item: Meeting) => {
+    setSelectedMeeting(item);
+    setIsQrModalOpen(true);
   };
 
 
@@ -1177,6 +1272,16 @@ export default function MeetingsPage() {
                     {roleId !== 2 ? (
                       <div className="flex space-x-3">
                         <button
+                          onClick={() => handleOpenQrModal(item)}
+                          title="QR Code"
+                          className="text-neutral-500 hover:text-primary-600 transition-colors"
+                        >
+                          {/* QR icon */}
+                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h6v6H3V3zM15 3h6v6h-6V3zM3 15h6v6H3v-6zM8 8h8v8H8V8zM17 17h4v4h-4v-4z" />
+                          </svg>
+                        </button>
+                        <button
                           onClick={() => handleOpenEditModal(item)} // <-- Connect handler
                           title="Edit"
                           className="text-neutral-500 hover:text-primary-600 transition-colors"
@@ -1197,6 +1302,15 @@ export default function MeetingsPage() {
                       </div>
                     ) : (
                       <div>
+                        <button
+                          onClick={() => handleOpenQrModal(item)}
+                          title="QR Code"
+                          className="text-neutral-500 hover:text-primary-600 transition-colors mr-2"
+                        >
+                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h6v6H3V3zM15 3h6v6h-6V3zM3 15h6v6H3v-6zM8 8h8v8H8V8zM17 17h4v4h-4v-4z" />
+                          </svg>
+                        </button>
                         <button
                           onClick={() => handleOpenViewModal(item)}
                           title="View"
@@ -1248,6 +1362,13 @@ export default function MeetingsPage() {
         <ViewMeetingModal
           isOpen={isViewModalOpen}
           onClose={() => setIsViewModalOpen(false)}
+          meeting={selectedMeeting}
+        />
+      )}
+      {selectedMeeting && (
+        <QrModal
+          isOpen={isQrModalOpen}
+          onClose={() => setIsQrModalOpen(false)}
           meeting={selectedMeeting}
         />
       )}
