@@ -901,8 +901,9 @@ export default function UserManagementPage() {
     // 2. Sort data based on sort config
     if (sortConfig.key) {
       filteredData.sort((a, b) => {
-        // Use helper to get potentially nested values like Division.name
+        // @ts-ignore
         const aValue = getNestedValue(a, sortConfig.key);
+        // @ts-ignore
         const bValue = getNestedValue(b, sortConfig.key);
 
         let comparison = 0;

@@ -546,7 +546,9 @@ export default function RoadmapPage() {
     // 2. Sort data based on sort config
     if (sortConfig.key) {
       filteredData.sort((a, b) => {
-        const aValue = getNestedValue(a, sortConfig.key); 
+        // @ts-ignore
+        const aValue = getNestedValue(a, sortConfig.key);
+        // @ts-ignore 
         const bValue = getNestedValue(b, sortConfig.key);
         
         let comparison = 0;
