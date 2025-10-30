@@ -1,4 +1,4 @@
-'use client'; 
+'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
@@ -50,15 +50,15 @@ const formatDateForInput = (dateString: string) => {
 
 // --- Helper to format time for input[type="time"] (HH:MM) ---
 const formatTimeForInput = (timeString: string) => {
-   if (!timeString) return '';
-   try {
-     // Assuming timeString is "HH:mm:ss"
-     const [hours, minutes] = timeString.split(':');
-     return `${hours}:${minutes}`;
-   } catch (error) {
-     console.error("Failed to format time for input:", timeString, error);
-     return '';
-   }
+  if (!timeString) return '';
+  try {
+    // Assuming timeString is "HH:mm:ss"
+    const [hours, minutes] = timeString.split(':');
+    return `${hours}:${minutes}`;
+  } catch (error) {
+    console.error("Failed to format time for input:", timeString, error);
+    return '';
+  }
 };
 
 
@@ -72,6 +72,7 @@ type Meeting = {
   date: string;
   time: string;
   divisionId: number;
+  Division: { name: string }
 };
 
 // --- Define a type for division data ---
@@ -94,20 +95,20 @@ const getValue = (obj: Meeting, key: SortKey) => {
 };
 
 // --- AddMeetingModal Component ---
-const AddMeetingModal = ({ 
-  isOpen, 
-  onClose, 
+const AddMeetingModal = ({
+  isOpen,
+  onClose,
   token,
   onMeetingAdded
-}: { 
-  isOpen: boolean, 
-  onClose: () => void, 
+}: {
+  isOpen: boolean,
+  onClose: () => void,
   token: string | null,
   onMeetingAdded: () => void
 }) => {
   // Dropdown data state
   const [divisions, setDivisions] = useState<Division[]>([]);
-  
+
   // Form input state
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
@@ -122,7 +123,7 @@ const AddMeetingModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  
+
   // Fetch divisions when modal opens
   useEffect(() => {
     if (isOpen && token) {
@@ -155,7 +156,7 @@ const AddMeetingModal = ({
       setSuccessMessage(null);
       return;
     }
-    
+
     setIsSubmitting(true);
     setError(null);
     setSuccessMessage(null);
@@ -196,7 +197,7 @@ const AddMeetingModal = ({
     } catch (err) {
       setError((err as Error).message);
       setIsSubmitting(false);
-    } 
+    }
   };
 
   // Reset form when closing
@@ -230,7 +231,7 @@ const AddMeetingModal = ({
             </svg>
           </button>
         </div>
-        
+
         {isLoading ? (
           <div className="py-12 text-center text-neutral-600">Loading divisions...</div>
         ) : (
@@ -264,7 +265,7 @@ const AddMeetingModal = ({
             </div>
 
             {/* Type */}
-             <div>
+            <div>
               <label htmlFor="meeting-type" className="block text-body-md font-semibold text-neutral-800 mb-2">
                 Type
               </label>
@@ -281,7 +282,7 @@ const AddMeetingModal = ({
             </div>
 
             {/* Details */}
-             <div>
+            <div>
               <label htmlFor="meeting-details" className="block text-body-md font-semibold text-neutral-800 mb-2">
                 Details (Location/Link)
               </label>
@@ -341,7 +342,7 @@ const AddMeetingModal = ({
                 ))}
               </select>
             </div>
-            
+
             {/* Feedback */}
             {error && (
               <p className="text-body-md text-error p-3 bg-error/10 rounded-lg">
@@ -380,22 +381,22 @@ const AddMeetingModal = ({
 };
 
 // --- NEW: EditMeetingModal Component ---
-const EditMeetingModal = ({ 
-  isOpen, 
-  onClose, 
+const EditMeetingModal = ({
+  isOpen,
+  onClose,
   token,
   onMeetingUpdated,
   meeting // Pass the meeting data to edit
-}: { 
-  isOpen: boolean, 
-  onClose: () => void, 
+}: {
+  isOpen: boolean,
+  onClose: () => void,
   token: string | null,
   onMeetingUpdated: () => void,
   meeting: Meeting
 }) => {
   // Dropdown data state
   const [divisions, setDivisions] = useState<Division[]>([]);
-  
+
   // Form input state - Initialize with meeting data
   const [name, setName] = useState(meeting.name);
   const [desc, setDesc] = useState(meeting.desc);
@@ -410,7 +411,7 @@ const EditMeetingModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  
+
   // Fetch divisions when modal opens
   useEffect(() => {
     if (isOpen && token) {
@@ -452,12 +453,12 @@ const EditMeetingModal = ({
   // Handle form submission for EDIT (PUT)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-     if (!name || !desc || !type || !details || !date || !time || !divisionId) {
+    if (!name || !desc || !type || !details || !date || !time || !divisionId) {
       setError('All fields are required.');
       setSuccessMessage(null);
       return;
     }
-    
+
     setIsSubmitting(true);
     setError(null);
     setSuccessMessage(null);
@@ -490,7 +491,7 @@ const EditMeetingModal = ({
 
       setSuccessMessage('Meeting updated successfully!');
       onMeetingUpdated(); // Refresh the table
-      
+
       setTimeout(() => {
         handleClose();
       }, 1500);
@@ -516,17 +517,17 @@ const EditMeetingModal = ({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-h4 text-neutral-900">Edit Meeting</h2>
           <button onClick={handleClose} className="text-neutral-500 hover:text-neutral-800">
-             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        
+
         {isLoading ? (
           <div className="py-12 text-center text-neutral-600">Loading divisions...</div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-             {/* Name */}
+            {/* Name */}
             <div>
               <label htmlFor="edit-meeting-name" className="block text-body-md font-semibold text-neutral-800 mb-2">
                 Meeting Name
@@ -555,7 +556,7 @@ const EditMeetingModal = ({
             </div>
 
             {/* Type */}
-             <div>
+            <div>
               <label htmlFor="edit-meeting-type" className="block text-body-md font-semibold text-neutral-800 mb-2">
                 Type
               </label>
@@ -571,7 +572,7 @@ const EditMeetingModal = ({
             </div>
 
             {/* Details */}
-             <div>
+            <div>
               <label htmlFor="edit-meeting-details" className="block text-body-md font-semibold text-neutral-800 mb-2">
                 Details (Location/Link)
               </label>
@@ -630,7 +631,7 @@ const EditMeetingModal = ({
                 ))}
               </select>
             </div>
-            
+
             {/* Feedback */}
             {error && (
               <p className="text-body-md text-error p-3 bg-error/10 rounded-lg">
@@ -704,7 +705,7 @@ const DeleteMeetingConfirmationModal = ({
 
       const data = await response.json();
       // Check for successful status (might be 200 or 204 No Content)
-      if (!response.ok || (data.status && data.status !== 200)) { 
+      if (!response.ok || (data.status && data.status !== 200)) {
         throw new Error(data.message || 'Failed to delete meeting');
       }
 
@@ -767,25 +768,122 @@ const DeleteMeetingConfirmationModal = ({
 };
 
 
+// --- ViewMeetingModal Component (read-only form matching AddMeetingModal styles) ---
+const ViewMeetingModal = ({
+  isOpen,
+  onClose,
+  meeting,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  meeting: Meeting;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl my-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-h4 text-neutral-900">Meeting Details</h2>
+          <button onClick={onClose} className="text-neutral-500 hover:text-neutral-800">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <form className="space-y-4">
+          {/* Name */}
+          <div>
+            <label className="block text-body-md font-semibold text-neutral-800 mb-2">Meeting Name</label>
+            <input
+              type="text"
+              value={meeting.name}
+              disabled
+              className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 bg-neutral-50"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-body-md font-semibold text-neutral-800 mb-2">Description</label>
+            <textarea
+              value={meeting.desc}
+              disabled
+              rows={3}
+              className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 bg-neutral-50"
+            />
+          </div>
+
+          {/* Type */}
+          <div>
+            <label className="block text-body-md font-semibold text-neutral-800 mb-2">Type</label>
+            <select value={meeting.type} disabled className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md bg-neutral-50">
+              <option value="onsite">Onsite</option>
+              <option value="online">Online</option>
+            </select>
+          </div>
+
+          {/* Details */}
+          <div>
+            <label className="block text-body-md font-semibold text-neutral-800 mb-2">Details (Location/Link)</label>
+            <input
+              type="text"
+              value={meeting.details}
+              disabled
+              className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 bg-neutral-50"
+            />
+          </div>
+
+          {/* Date & Time */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-body-md font-semibold text-neutral-800 mb-2">Date</label>
+              <input type="date" value={formatDateForInput(meeting.date)} disabled className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md bg-neutral-50" />
+            </div>
+            <div>
+              <label className="block text-body-md font-semibold text-neutral-800 mb-2">Time</label>
+              <input type="time" value={formatTimeForInput(meeting.time)} disabled className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md bg-neutral-50" />
+            </div>
+          </div>
+
+          {/* Division */}
+          <div>
+            <label className="block text-body-md font-semibold text-neutral-800 mb-2">Division</label>
+            <select value={meeting.divisionId.toString()} disabled className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md bg-neutral-50">
+              <option value={meeting.divisionId}>{meeting.Division.name}</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <button type="button" onClick={onClose} className="rounded-lg bg-primary-500 py-2 px-4 font-semibold text-body-md text-white shadow-sm hover:bg-primary-600">Close</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+
 export default function MeetingsPage() {
   // --- State for data, loading, and errors ---
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [roleId, setRoleId] = useState<number | null>(null);
 
   // --- State for Search and Sort ---
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'ascending' });
-  
+
   // --- State for Modals (to hook up buttons) ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   // --- NEW: State for Edit/Delete ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
-  
+
   // --- Refactored fetchMeetings ---
   const fetchMeetings = useCallback(async () => {
     if (!token) {
@@ -833,6 +931,8 @@ export default function MeetingsPage() {
       return;
     }
     setToken(storedToken);
+    const storedRoleId = localStorage.getItem('roleId');
+    if (storedRoleId) setRoleId(parseInt(storedRoleId, 10));
   }, []);
 
   // --- useEffect to fetch data once token is set ---
@@ -865,20 +965,20 @@ export default function MeetingsPage() {
         const aValue = getValue(a, sortConfig.key);
         // @ts-ignore
         const bValue = getValue(b, sortConfig.key);
-        
+
         let comparison = 0;
 
         if (aValue === null || aValue === undefined) comparison = -1;
         if (bValue === null || bValue === undefined) comparison = 1;
 
-        if (sortConfig.key === 'date') { 
+        if (sortConfig.key === 'date') {
           // Compare dates correctly
           comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
         } else if (sortConfig.key === 'time') {
           // Compare times correctly (convert HH:MM:SS to seconds)
           const timeToSeconds = (timeStr: string) => {
-             const parts = timeStr.split(':').map(Number);
-             return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+            const parts = timeStr.split(':').map(Number);
+            return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
           }
           comparison = timeToSeconds(aValue) - timeToSeconds(bValue);
         } else if (aValue > bValue) {
@@ -886,7 +986,7 @@ export default function MeetingsPage() {
         } else if (aValue < bValue) {
           comparison = -1;
         }
-        
+
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
     }
@@ -909,7 +1009,7 @@ export default function MeetingsPage() {
     if (sortConfig.direction === 'ascending') return <span className="text-primary-800">▲</span>;
     return <span className="text-primary-800">▼</span>;
   };
-  
+
   // --- NEW: Handlers to open modals ---
   const handleOpenEditModal = (item: Meeting) => {
     setSelectedMeeting(item);
@@ -921,6 +1021,11 @@ export default function MeetingsPage() {
     setIsDeleteModalOpen(true);
   };
 
+  const handleOpenViewModal = (item: Meeting) => {
+    setSelectedMeeting(item);
+    setIsViewModalOpen(true);
+  };
+
 
   return (
     <div>
@@ -929,15 +1034,17 @@ export default function MeetingsPage() {
         <h1 className="text-4xl text-neutral-900">
           Meetings
         </h1>
-        <button
-          className="flex items-center space-x-2 rounded-lg bg-primary-500 py-2 px-4 text-white font-semibold text-body-md shadow-sm hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          <span>Add New</span>
-        </button>
+        {roleId !== 2 && (
+          <button
+            className="flex items-center space-x-2 rounded-lg bg-primary-500 py-2 px-4 text-white font-semibold text-body-md shadow-sm hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span>Add New</span>
+          </button>
+        )}
       </div>
 
       {/* --- Search Bar --- */}
@@ -957,15 +1064,15 @@ export default function MeetingsPage() {
           />
         </div>
       </div>
-      
-      {/* Table Container */} 
+
+      {/* Table Container */}
       <div className="overflow-x-auto rounded-lg shadow-md border border-neutral-200">
         <table className="w-full min-w-max text-left">
           {/* Table Header */}
           <thead className="border-b border-primary-200 bg-primary-50">
             <tr className="text-body-sm font-semibold text-primary-800">
               <th className="p-4">#</th>
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('name')}
               >
@@ -973,7 +1080,7 @@ export default function MeetingsPage() {
                   Name {getSortIcon('name')}
                 </div>
               </th>
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('date')}
               >
@@ -981,7 +1088,7 @@ export default function MeetingsPage() {
                   Date {getSortIcon('date')}
                 </div>
               </th>
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('time')}
               >
@@ -989,7 +1096,7 @@ export default function MeetingsPage() {
                   Time {getSortIcon('time')}
                 </div>
               </th>
-               <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('type')}
               >
@@ -1001,10 +1108,10 @@ export default function MeetingsPage() {
               <th className="p-4">Actions</th>
             </tr>
           </thead>
-          
+
           {/* Table Body: Conditional Rendering */}
           <tbody>
-            {isLoading && (!meetings || meetings.length === 0)? ( // Show loading only if table is empty
+            {isLoading && (!meetings || meetings.length === 0) ? ( // Show loading only if table is empty
               // --- Loading State ---
               <tr>
                 <td colSpan={7} className="p-8 text-center text-neutral-600">
@@ -1028,8 +1135,8 @@ export default function MeetingsPage() {
             ) : (
               // --- Data State ---
               processedMeetings.map((item, index) => (
-                <tr 
-                  key={item.id} 
+                <tr
+                  key={item.id}
                   className={`
                     border-b border-neutral-200 text-body-md text-neutral-800
                     ${index % 2 === 0 ? 'bg-white' : 'bg-neutral-50'}
@@ -1039,54 +1146,69 @@ export default function MeetingsPage() {
                   <td className="p-4 font-medium text-neutral-500">
                     {index + 1}
                   </td>
-                  
+
                   {/* Name */}
                   <td className="p-4 font-semibold">
                     {item.name}
                   </td>
-                  
+
                   {/* Date */}
                   <td className="p-4">
                     {formatDate(item.date)}
                   </td>
-                  
+
                   {/* Time */}
                   <td className="p-4">
                     {formatTime(item.time)}
                   </td>
-                  
+
                   {/* Type */}
                   <td className="p-4 capitalize">
                     {item.type}
                   </td>
-                  
+
                   {/* Details */}
                   <td className="p-4 truncate max-w-xs" title={item.details}>
                     {item.details}
                   </td>
-                  
+
                   {/* Actions */}
                   <td className="p-4">
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={() => handleOpenEditModal(item)} // <-- Connect handler
-                        title="Edit"
-                        className="text-neutral-500 hover:text-primary-600 transition-colors"
-                      >
-                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleOpenDeleteModal(item)} // <-- Connect handler
-                        title="Delete"
-                        className="text-neutral-500 hover:text-error transition-colors"
-                      >
-                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
+                    {roleId !== 2 ? (
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={() => handleOpenEditModal(item)} // <-- Connect handler
+                          title="Edit"
+                          className="text-neutral-500 hover:text-primary-600 transition-colors"
+                        >
+                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleOpenDeleteModal(item)} // <-- Connect handler
+                          title="Delete"
+                          className="text-neutral-500 hover:text-error transition-colors"
+                        >
+                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <button
+                          onClick={() => handleOpenViewModal(item)}
+                          title="View"
+                          className="text-neutral-500 hover:text-primary-600 transition-colors"
+                        >
+                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.269 2.943 9.542 7-1.273 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))
@@ -1096,29 +1218,36 @@ export default function MeetingsPage() {
       </div>
 
       {/* --- Render Add Meeting Modal --- */}
-      <AddMeetingModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <AddMeetingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         token={token}
-        onMeetingAdded={fetchMeetings} 
+        onMeetingAdded={fetchMeetings}
       />
-      
+
       {/* --- NEW: Render Edit/Delete Modals --- */}
       {selectedMeeting && (
-        <EditMeetingModal 
-          isOpen={isEditModalOpen} 
-          onClose={() => setIsEditModalOpen(false)} 
+        <EditMeetingModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
           token={token}
-          onMeetingUpdated={fetchMeetings} 
+          onMeetingUpdated={fetchMeetings}
           meeting={selectedMeeting}
         />
       )}
       {selectedMeeting && (
-        <DeleteMeetingConfirmationModal 
-          isOpen={isDeleteModalOpen} 
-          onClose={() => setIsDeleteModalOpen(false)} 
+        <DeleteMeetingConfirmationModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
           token={token}
-          onMeetingDeleted={fetchMeetings} 
+          onMeetingDeleted={fetchMeetings}
+          meeting={selectedMeeting}
+        />
+      )}
+      {selectedMeeting && (
+        <ViewMeetingModal
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
           meeting={selectedMeeting}
         />
       )}
