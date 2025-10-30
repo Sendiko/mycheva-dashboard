@@ -281,9 +281,9 @@ const AddUserModal = ({
                 >
                   <option value="" disabled>Select role</option>
                   <option value="1">Mentor</option>
-                  <option value="2">Member</option>
-                  {/* Add roleId 3 if needed */}
-                  <option value="3">Admin</option>
+                  <option value="2">Student</option>
+                  <option value="3">Coordinator</option>
+                  <option value="4">Core</option>
                 </select>
               </div>
               <div>
