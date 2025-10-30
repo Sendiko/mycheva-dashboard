@@ -225,14 +225,14 @@ const AddAnnouncementModal = ({
       const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/announcement', {
         method: 'POST',
         headers: {
-          // 'Content-Type': 'multipart/form-data' is set automatically by browser with FormData
+          'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`,
         },
         body: formData, // <-- Send FormData instead of JSON
       });
 
       const data = await response.json();
-      if (!response.ok || data.status !== 200) {
+      if (!response.ok || data.status !== 201) {
         throw new Error(data.message || 'Failed to create announcement');
       }
 

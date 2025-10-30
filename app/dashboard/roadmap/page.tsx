@@ -106,7 +106,7 @@ const AddRoadmapModal = ({
       });
 
       const data = await response.json();
-      if (!response.ok || data.status !== 200) {
+      if (!response.ok || data.status !== 201) {
         throw new Error(data.message || 'Failed to create roadmap');
       }
 

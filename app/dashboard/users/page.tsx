@@ -151,7 +151,7 @@ const AddUserModal = ({
       });
 
       const data = await response.json();
-      if (!response.ok || data.status !== 200) { // Check API status code
+      if (!response.ok || data.status !== 201) { // Check API status code
         // Try to get a more specific error message
         throw new Error(data.message || 'Failed to register user');
       }
