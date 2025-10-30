@@ -189,10 +189,9 @@ const AddMeetingModal = ({
       // Success
       setSuccessMessage('Meeting created successfully!');
       onMeetingAdded(); // Refresh the table
-      
-      setTimeout(() => {
-        handleClose(); // Close the modal
-      }, 1500); 
+
+      // Close modal immediately after successful creation and refresh
+      handleClose();
 
     } catch (err) {
       setError((err as Error).message);
@@ -927,7 +926,7 @@ export default function MeetingsPage() {
     <div>
       {/* --- Top Bar: Header and Add Button --- */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-h3 text-neutral-900">
+        <h1 className="text-4xl text-neutral-900">
           Meetings
         </h1>
         <button

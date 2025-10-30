@@ -239,10 +239,9 @@ const AddAnnouncementModal = ({
       // Success
       setSuccessMessage('Announcement created successfully!');
       onAnnouncementAdded(); // Refresh the list
-      
-      setTimeout(() => {
-        handleClose(); // Close the modal
-      }, 1500);
+
+      // Close modal immediately after successful creation and refresh
+      handleClose();
 
     } catch (err) {
       setError((err as Error).message);
@@ -783,7 +782,7 @@ export default function AnnouncementsPage() {
     <div>
       {/* --- NEW: Header with Add New Button --- */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-h3 text-neutral-900">Announcements</h1>
+        <h1 className="text-4xl text-neutral-900">Announcements</h1>
         <button
           className="flex items-center space-x-2 rounded-lg bg-primary-500 py-2 px-4 text-white font-semibold text-body-md shadow-sm hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           onClick={() => setIsModalOpen(true)} // <-- Hook up the modal

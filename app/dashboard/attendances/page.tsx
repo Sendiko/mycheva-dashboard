@@ -198,10 +198,9 @@ const AddAttendanceModal = ({
       // Success
       setSuccessMessage('Attendance created successfully!');
       onAttendanceAdded(); // Refresh the table in the background
-      
-      setTimeout(() => {
-        handleClose(); // Close the modal
-      }, 1500); 
+
+      // Close modal immediately after successful creation and refresh
+      handleClose();
 
     } catch (err) {
       setError((err as Error).message);

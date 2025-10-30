@@ -31,7 +31,7 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, password }),
+        body: JSON.stringify({ name, password, mobile: false }),
       });
 
       const data = await response.json();
@@ -42,6 +42,7 @@ export default function LoginPage() {
         // 1. Save the token
         localStorage.setItem('token', data.token);
         localStorage.setItem('userId', data.user.id);
+        localStorage.setItem('roleId', data.user.roleId);
         
         // 2. Redirect to dashboard
         // We add a small delay so the user can see the success message
