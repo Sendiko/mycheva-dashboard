@@ -218,7 +218,7 @@ const AddAnnouncementModal = ({
     formData.append('content', content);
     formData.append('userId', userId);
     if (selectedFile) {
-      formData.append('image', selectedFile); // 'image' is the key your API expects
+      formData.append('file', selectedFile); // 'image' is the key your API expects
     }
 
     try {
