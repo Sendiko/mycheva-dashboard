@@ -225,7 +225,6 @@ const AddAnnouncementModal = ({
       const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/announcement', {
         method: 'POST',
         headers: {
-          'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`,
         },
         body: formData, // <-- Send FormData instead of JSON
