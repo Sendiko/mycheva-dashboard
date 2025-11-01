@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-// import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
+import axios from 'axios';
+import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
 
 // --- Helper function to format the date ---
 const formatDate = (dateString: string) => {
@@ -138,19 +139,17 @@ const AddAttendanceModal = ({
         setError(null);
         try {
           // Fetch Users
-          const userResponse = await fetch('https://my-cheva-api.kakashispiritnews.my.id/user/all', {
+          const userRes = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/user/all', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (!userResponse.ok) throw new Error('Failed to fetch users');
-          const userData = await userResponse.json();
+          const userData = userRes.data;
           if (userData.status === 200) setUsers(userData.users);
 
           // Fetch Events
-          const eventResponse = await fetch('https://my-cheva-api.kakashispiritnews.my.id/event', {
+          const eventRes = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/event', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (!eventResponse.ok) throw new Error('Failed to fetch events');
-          const eventData = await eventResponse.json();
+          const eventData = eventRes.data;
           if (eventData.status === 200) setEvents(eventData.events);
 
         } catch (err) {
@@ -177,21 +176,16 @@ const AddAttendanceModal = ({
     setSuccessMessage(null); // Clear messages
 
     try {
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/attendance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          userId: Number(selectedUserId),
-          eventId: Number(selectedEventId),
-          status: selectedStatus,
-        }),
+      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/attendance', {
+        userId: Number(selectedUserId),
+        eventId: Number(selectedEventId),
+        status: selectedStatus,
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 201) {
+      const data = res.data;
+      if (data.status !== 201) {
         throw new Error(data.message || 'Failed to create attendance');
       }
 
@@ -371,19 +365,14 @@ const EditAttendanceModal = ({
 
     try {
       // Per your API spec: PUT to /attendance with ID and status in body
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/attendance/${attendance.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          status: selectedStatus,
-        }),
+      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/attendance/${attendance.id}`, {
+        status: selectedStatus,
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 200) {
+      const data = res.data;
+      if (data.status !== 200) {
         throw new Error(data.message || 'Failed to update attendance');
       }
 
@@ -524,16 +513,12 @@ const DeleteConfirmationModal = ({
 
     try {
       // Per your API spec: DELETE to /attendance with ID in body
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/attendance/${attendance.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+      const res = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/attendance/${attendance.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 200) {
+      const data = res.data;
+      if (data.status !== 200) {
         throw new Error(data.message || 'Failed to delete attendance');
       }
 
@@ -627,19 +612,11 @@ export default function AttendancesPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/attendance', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/attendance', {
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
-      }
-
-      const data = await response.json();
+      const data = res.data;
 
       if (data.status === 200 && Array.isArray(data.attendances)) {
         setAttendances(data.attendances);
@@ -869,24 +846,6 @@ export default function AttendancesPage() {
                   {/* Person (Photo + Name) */}
                   <td className="p-4">
                     <div className="flex items-center space-x-3">
-                      {/* --- PREVIEW FIX ---
-                        The <Image> component is replaced with a standard <img> tag
-                        for the preview. In your local Next.js project,
-                        you should use the original <Image> component code below.
-                      ----------------------*/}
-                      <img
-                        src={item.user.profileUrl}
-                        alt={item.user.UserDatum.fullName || item.user.name}
-                        width={40}
-                        height={40}
-                        className="rounded-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.onerror = null; // prevent infinite loop
-                          target.src = `https://placehold.co/40x40/DEDEDE/424242?text=${item.user.name.charAt(0)}`;
-                        }}
-                      />
-                      {/* --- ORIGINAL CODE for your Next.js project ---
                       <Image
                         src={item.user.profileUrl}
                         alt={item.user.UserDatum.fullName || item.user.name}
@@ -899,7 +858,6 @@ export default function AttendancesPage() {
                           target.src = `httpsD://placehold.co/40x40/DEDEDE/424242?text=${item.user.name.charAt(0)}`;
                         }}
                       />
-                      ---------------------------------------------- */}
                       <span className="font-semibold">
                         {item.user.UserDatum.fullName || item.user.name}
                       </span>

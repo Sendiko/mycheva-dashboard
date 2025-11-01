@@ -1,6 +1,7 @@
 'use client'; 
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import axios from 'axios';
 
 // --- Define a type for the roadmap data ---
 type Roadmap = {
@@ -62,11 +63,10 @@ const AddRoadmapModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/division', {
+          const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (!response.ok) throw new Error('Failed to fetch divisions');
-          const data = await response.json();
+          const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
         } catch (err) {
           setError((err as Error).message);
@@ -92,21 +92,19 @@ const AddRoadmapModal = ({
     setSuccessMessage(null);
 
     try {
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/roadmap', {
-        method: 'POST',
+      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/roadmap', {
+        title,
+        desc,
+        divisionId: Number(divisionId),
+      }, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title,
-          desc,
-          divisionId: Number(divisionId),
-        }),
+        }
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 201) {
+      const data = res.data;
+      if (data.status !== 201) {
         throw new Error(data.message || 'Failed to create roadmap');
       }
 
@@ -230,11 +228,10 @@ const EditRoadmapModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/division', {
+          const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (!response.ok) throw new Error('Failed to fetch divisions');
-          const data = await response.json();
+          const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
         } catch (err) {
           setError((err as Error).message);
@@ -269,21 +266,19 @@ const EditRoadmapModal = ({
     setSuccessMessage(null);
 
     try {
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/roadmap/${roadmap.id}`, {
-        method: 'PUT',
+      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/roadmap/${roadmap.id}`, {
+        title,
+        desc,
+        divisionId: Number(divisionId),
+      }, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title,
-          desc,
-          divisionId: Number(divisionId),
-        }),
+        }
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 200) {
+      const data = res.data;
+      if (data.status !== 200) {
         throw new Error(data.message || 'Failed to update roadmap');
       }
 
@@ -396,16 +391,12 @@ const DeleteRoadmapConfirmationModal = ({
     setError(null);
 
     try {
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/roadmap/${roadmap.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+      const res = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/roadmap/${roadmap.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
-      const data = await response.json();
-      if (!response.ok || (data.status && data.status !== 200)) { 
+      const data = res.data;
+      if (data.status && data.status !== 200) { 
         throw new Error(data.message || 'Failed to delete roadmap');
       }
 
@@ -548,19 +539,14 @@ export default function RoadmapPage() {
  
     setError(null);
     try {
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/roadmap', {
-        method: 'GET',
+      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/roadmap', {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch roadmap data');
-      }
-
-      const data = await response.json();
+      const data = res.data;
 
       if (data.status === 200 && Array.isArray(data.roadmaps)) {
         setRoadmaps(data.roadmaps);

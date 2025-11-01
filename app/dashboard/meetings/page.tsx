@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import axios from 'axios';
 import QRCode from 'react-qr-code';
 
 // --- Helper function to format the date ---
@@ -132,11 +133,10 @@ const AddMeetingModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/division', {
+          const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (!response.ok) throw new Error('Failed to fetch divisions');
-          const data = await response.json();
+          const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
 
         } catch (err) {
@@ -166,25 +166,23 @@ const AddMeetingModal = ({
       // API expects time with seconds, append ':00'
       const formattedTime = `${time}:00`;
 
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/event', {
-        method: 'POST',
+      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/event', {
+        name,
+        desc,
+        type,
+        details,
+        date,
+        time: formattedTime,
+        divisionId: Number(divisionId),
+      }, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name,
-          desc,
-          type,
-          details,
-          date,
-          time: formattedTime,
-          divisionId: Number(divisionId),
-        }),
+        }
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 201) {
+      const data = res.data;
+      if (data.status !== 201) {
         throw new Error(data.message || 'Failed to create meeting');
       }
 
@@ -508,11 +506,10 @@ const EditMeetingModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/division', {
+          const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (!response.ok) throw new Error('Failed to fetch divisions');
-          const data = await response.json();
+          const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
 
         } catch (err) {
@@ -556,25 +553,23 @@ const EditMeetingModal = ({
       const formattedTime = `${time}:00`;
 
       // API: PUT to /event/:id
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/event/${meeting.id}`, {
-        method: 'PUT',
+      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/event/${meeting.id}`, {
+        name,
+        desc,
+        type,
+        details,
+        date,
+        time: formattedTime,
+        divisionId: Number(divisionId),
+      }, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name,
-          desc,
-          type,
-          details,
-          date,
-          time: formattedTime,
-          divisionId: Number(divisionId),
-        }),
+        }
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 200) {
+      const data = res.data;
+      if (data.status !== 200) {
         throw new Error(data.message || 'Failed to update meeting');
       }
 
@@ -782,19 +777,18 @@ const DeleteMeetingConfirmationModal = ({
 
     try {
       // API: DELETE to /event/:id
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/event/${meeting.id}`, {
-        method: 'DELETE',
+      const res = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/event/${meeting.id}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        // Assuming API might need ID in body even for DELETE, check API docs
-        // body: JSON.stringify({ eventId: meeting.id }), 
+        // If API requires body for DELETE, axios supports `data` here
+        // data: { eventId: meeting.id },
       });
 
-      const data = await response.json();
+      const data = res.data;
       // Check for successful status (might be 200 or 204 No Content)
-      if (!response.ok || (data.status && data.status !== 200)) {
+      if (data && data.status && data.status !== 200) {
         throw new Error(data.message || 'Failed to delete meeting');
       }
 
@@ -985,19 +979,14 @@ export default function MeetingsPage() {
     // Don't show loading on refresh
     // setIsLoading(true);
     try {
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/event', {
-        method: 'GET',
+      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/event', {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
-      }
-
-      const data = await response.json();
+      const data = res.data;
 
       if (data.status === 200 && Array.isArray(data.events)) {
         setMeetings(data.events);

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import axios from 'axios';
 import Image from 'next/image'; // <-- PREVIEW FIX: Commented out for the preview environment.
 import { useRouter } from 'next/navigation'; // <-- PREVIEW FIX: Commented out for the preview environment.
 
@@ -26,15 +27,11 @@ export default function LoginPage() {
     setSuccess(null);
 
     try {
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, password, mobile: false }),
+      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/login', { name, password, mobile: false }, {
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      const data = await response.json();
+      const data = res.data;
 
       if (data.status === 200 && data.token) {
         setSuccess(data.message || 'Login successful!');
