@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import axios from 'axios';
 import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
 
 
@@ -94,11 +95,10 @@ const AddUserModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/division', {
-            headers: { 'Authorization': `Bearer ${token}` }
+      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
+        headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (!response.ok) throw new Error('Failed to fetch divisions');
-          const data = await response.json();
+          const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
 
         } catch (err) {
@@ -130,28 +130,26 @@ const AddUserModal = ({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/register', {
-        method: 'POST',
+      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/register', {
+        name,
+        fullName,
+        nim,
+        email,
+        faculty,
+        major,
+        roleId: Number(roleId), // Ensure it's a number
+        password,
+        password_confirmation: passwordConfirmation,
+        divisionId: Number(divisionId), // Ensure it's a number
+      }, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Assuming registration needs auth token too
-        },
-        body: JSON.stringify({
-          name,
-          fullName,
-          nim,
-          email,
-          faculty,
-          major,
-          roleId: Number(roleId), // Ensure it's a number
-          password,
-          password_confirmation: passwordConfirmation,
-          divisionId: Number(divisionId), // Ensure it's a number
-        }),
+          'Authorization': `Bearer ${token}`,
+        }
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 201) { // Check API status code
+      const data = res.data;
+      if (data.status !== 201) { // Check API status code
         // Try to get a more specific error message
         throw new Error(data.message || 'Failed to register user');
       }
@@ -408,11 +406,10 @@ const EditUserModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/division', {
+          const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (!response.ok) throw new Error('Failed to fetch divisions');
-          const data = await response.json();
+          const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
 
         } catch (err) {
@@ -481,17 +478,15 @@ const EditUserModal = ({
 
     try {
       // API: PUT to /user/:id
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/user/${user.id}`, {
-        method: 'PUT',
+      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/user/${user.id}`, body, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
+        }
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 200) {
+      const data = res.data;
+      if (data.status !== 200) {
         throw new Error(data.message || 'Failed to update user');
       }
 
@@ -730,18 +725,16 @@ const DeleteUserConfirmationModal = ({
 
     try {
       // API: DELETE to /user/delete/:id
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/user/delete/${user.id}`, {
-        method: 'DELETE',
+      const res = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/user/delete/${user.id}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        // No body needed for DELETE with ID in URL
       });
 
-      const data = await response.json();
+      const data = res.data;
       // Check for successful status (might be 200 or 204 No Content)
-      if (!response.ok || (data.status && data.status !== 200)) {
+      if (data && data.status && data.status !== 200) {
         throw new Error(data.message || 'Failed to delete user');
       }
 
@@ -835,19 +828,14 @@ export default function UserManagementPage() {
     // setIsLoading(true); 
     setError(null);
     try {
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/user/all?detailed=true', {
-        method: 'GET',
+      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/user/all?detailed=true', {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch user data');
-      }
-
-      const data = await response.json();
+      const data = res.data;
 
       if (data.status === 200 && Array.isArray(data.users)) {
         setUsers(data.users);

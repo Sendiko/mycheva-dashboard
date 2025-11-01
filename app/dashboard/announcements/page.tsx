@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-// import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
+import axios from 'axios';
+import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
+import { useRouter } from 'next/navigation';
 
 // --- Helper function to format the date ---
 const formatDate = (dateString: string) => {
@@ -55,24 +57,6 @@ const AnnouncementCard = ({
     <div className="w-full bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
       {/* --- Card Header --- */}
       <div className="flex items-center space-x-4 p-6">
-        {/* --- PREVIEW FIX ---
-          The <Image> component is replaced with a standard <img> tag
-          for the preview. In your local Next.js project,
-          you should use the original <Image> component code below.
-        ----------------------*/}
-        <img
-          src={announcement.user.profileUrl}
-          alt={announcement.user.UserDatum.fullName}
-          width={48}
-          height={48}
-          className="rounded-full object-cover h-12 w-12"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.onerror = null; // prevent infinite loop
-            target.src = `https://placehold.co/48x48/DEDEDE/424242?text=${announcement.user.UserDatum.fullName.charAt(0)}`;
-          }}
-        />
-        {/* --- ORIGINAL CODE for your Next.js project ---
         <Image
           src={announcement.user.profileUrl}
           alt={announcement.user.UserDatum.fullName}
@@ -85,7 +69,6 @@ const AnnouncementCard = ({
             target.src = `https://placehold.co/48x48/DEDEDE/424242?text=${announcement.user.UserDatum.fullName.charAt(0)}`;
           }}
         />
-        ---------------------------------------------- */}
         <div>
           <h2 className="font-bold text-body-lg text-neutral-900">
             {announcement.user.UserDatum.fullName}
@@ -108,20 +91,12 @@ const AnnouncementCard = ({
             className="relative w-full h-64 mb-4 rounded-lg overflow-hidden cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary-500 ring-offset-2"
             onClick={() => onImageClick(fullImageUrl)} // <-- NEW: onClick handler
           >
-            {/* --- PREVIEW FIX --- (Using <img> tag) */}
-            <img
-              src={fullImageUrl} // <-- Use the new full URL
-              alt={announcement.title}
-              className="w-full h-full object-cover"
-            />
-            {/* --- ORIGINAL CODE for your Next.js project ---
             <Image
               src={fullImageUrl} // <-- Use the new full URL
               alt={announcement.title}
               layout="fill"
               className="object-cover"
             />
-            ---------------------------------------------- */}
             {/* --- NEW: Hover Overlay --- */}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
               <span className="text-white bg-black/50 px-3 py-1 rounded-md text-sm">
@@ -222,16 +197,15 @@ const AddAnnouncementModal = ({
     }
 
     try {
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/announcement', {
-        method: 'POST',
+      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/announcement', formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          // Let browser set Content-Type for FormData
         },
-        body: formData, // <-- Send FormData instead of JSON
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 201) {
+      const data = res.data;
+      if (data.status !== 201) {
         throw new Error(data.message || 'Failed to create announcement');
       }
 
@@ -424,16 +398,14 @@ const EditAnnouncementModal = ({
     }
 
     try {
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/announcement/${announcement.id}`, {
-        method: 'PUT',
+      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/announcement/${announcement.id}`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
-        body: formData,
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 200) {
+      const data = res.data;
+      if (data.status !== 200) {
         throw new Error(data.message || 'Failed to update announcement');
       }
 
@@ -585,19 +557,18 @@ const DeleteConfirmationModal = ({
 
     try {
       // NOTE: Following your attendance pattern of sending ID in the body
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/announcement/${announcement.id}`, {
-        method: 'DELETE',
+      const res = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/announcement/${announcement.id}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
+        data: {
           announcementId: announcement.id,
-        }),
+        },
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 200) {
+      const data = res.data;
+      if (data.status !== 200) {
         throw new Error(data.message || 'Failed to delete announcement');
       }
 
@@ -681,7 +652,7 @@ const FullScreenImageModal = ({ imageUrl, onClose }: { imageUrl: string, onClose
         className="relative max-w-full max-h-full"
         onClick={(e) => e.stopPropagation()} // Prevent click on image from closing
       >
-        <img 
+        <Image 
           src={imageUrl} 
           alt="Full size announcement" 
           className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" 
@@ -717,8 +688,8 @@ export default function AnnouncementsPage() {
       setIsLoading(false);
       // You might want to redirect here:
       // import { useRouter } from 'next/navigation';
-      // const router = useRouter();
-      // router.push('/login');
+      const router = useRouter();
+      router.push('/login');
       return;
     }
     setToken(storedToken);
@@ -735,18 +706,14 @@ export default function AnnouncementsPage() {
     // setIsLoading(true); 
     setError(null);
     try {
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/announcement', {
+      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/announcement', {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch announcements.');
-      }
-
-      const data = await response.json();
+      const data = res.data;
       if (data.status === 200 && Array.isArray(data.announcements)) {
         setAnnouncements(data.announcements);
       } else {

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-// import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
+import axios from 'axios';
+import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
 
 // --- Define a type for the detailed user data ---
 type UserProfile = {
@@ -92,11 +93,10 @@ const EditProfileModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/division', {
+          const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (!response.ok) throw new Error('Failed to fetch divisions');
-          const data = await response.json();
+          const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
 
         } catch (err) {
@@ -163,17 +163,15 @@ const EditProfileModal = ({
 
     try {
       // API: PUT to /user/:id
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/user/${user.id}`, {
-        method: 'PUT',
+      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/user/${user.id}`, body, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`, 
-        },
-        body: JSON.stringify(body),
+        }
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 200) { 
+      const data = res.data;
+      if (data.status !== 200) { 
         throw new Error(data.message || 'Failed to update user');
       }
 
@@ -406,11 +404,10 @@ export default function ProfilePage() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/userdata/${userId}`, {
+      const res = await axios.get(`https://my-cheva-api.kakashispiritnews.my.id/userdata/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error('Failed to fetch user data');
-      const data = await response.json();
+      const data = res.data;
       if (data.status === 200 && data.user) {
         setProfile(data.user);
       } else {
@@ -460,20 +457,6 @@ export default function ProfilePage() {
             <div className="p-6 md:p-8">
               <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
                 {/* Profile Picture */}
-                {/* <Image ... /> */} {/* PREVIEW FIX */}
-                <img
-                  src={profile.profileUrl}
-                  alt={profile.UserDatum.fullName}
-                  width={128}
-                  height={128}
-                  className="rounded-full object-cover h-24 w-24 md:h-32 md:w-32 border-4 border-primary-100"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.onerror = null;
-                    target.src = `https://placehold.co/128x128/DEDEDE/424242?text=${profile.name.charAt(0)}`;
-                  }}
-                />
-                {/* --- ORIGINAL CODE ---
                 <Image
                   src={profile.profileUrl}
                   alt={profile.UserDatum.fullName}
@@ -486,8 +469,8 @@ export default function ProfilePage() {
                     target.src = `https://placehold.co/128x128/DEDEDE/424242?text=${profile.name.charAt(0)}`;
                   }}
                 />
-                */}
-                
+
+
                 {/* Name and Role */}
                 <div className="text-center md:text-left">
                   <h2 className="text-h3 text-neutral-900 break-words">{profile.UserDatum.fullName}</h2>

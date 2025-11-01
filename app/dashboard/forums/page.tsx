@@ -1,6 +1,7 @@
 'use client'; 
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import axios from 'axios';
 import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
 
 // --- Types ---
@@ -132,25 +133,19 @@ const CreateReplyForm = ({
 
     setIsSubmitting(true);
     try {
-      // --- UPDATED Endpoint ---
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/replies', { 
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          content,
-          userId,
-          forumId,
-        }),
+      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/replies', {
+        content,
+        userId,
+        forumId,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
-      const data = await response.json();
-      if (!response.ok || data.status !== 201) {
+
+      const data = res.data;
+      if (data.status !== 201) {
         throw new Error(data.message || 'Failed to post reply');
       }
-      
+
       setContent('');
       onReplyAdded(); // Refresh the forum list
 
@@ -325,20 +320,15 @@ const CreatePostForm = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/forum', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          content,
-          userId,
-        }),
+      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/forum', {
+        content,
+        userId,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      const data = await response.json();
-      if (!response.ok || data.status !== 201) {
+      const data = res.data;
+      if (data.status !== 201) {
         throw new Error(data.message || 'Failed to create post');
       }
 
@@ -409,13 +399,11 @@ const EditForumModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/forum/${post.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ content }),
+      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/forum/${post.id}`, { content }, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await response.json();
-      if (!response.ok || data.status !== 200) throw new Error(data.message || 'Failed to update post');
+      const data = res.data;
+      if (data.status !== 200) throw new Error(data.message || 'Failed to update post');
       onPostUpdated();
       onClose();
     } catch (err) {
@@ -463,12 +451,11 @@ const DeleteForumModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/forum/${post.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
+      const res = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/forum/${post.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await response.json();
-      if (!response.ok || data.status !== 200) throw new Error(data.message || 'Failed to delete post');
+      const data = res.data;
+      if (data.status !== 200) throw new Error(data.message || 'Failed to delete post');
       onPostUpdated();
       onClose();
     } catch (err) {
@@ -516,13 +503,11 @@ const EditReplyModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/replies/${reply.id}`, { // Assuming /replies/:id
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ content }),
+      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/replies/${reply.id}`, { content }, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await response.json();
-      if (!response.ok || data.status !== 200) throw new Error(data.message || 'Failed to update reply');
+      const data = res.data;
+      if (data.status !== 200) throw new Error(data.message || 'Failed to update reply');
       onPostUpdated();
       onClose();
     } catch (err) {
@@ -570,12 +555,11 @@ const DeleteReplyModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/replies/${reply.id}`, { // Assuming /replies/:id
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
+      const res = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/replies/${reply.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await response.json();
-      if (!response.ok || data.status !== 200) throw new Error(data.message || 'Failed to delete reply');
+      const data = res.data;
+      if (data.status !== 200) throw new Error(data.message || 'Failed to delete reply');
       onPostUpdated();
       onClose();
     } catch (err) {
@@ -652,11 +636,10 @@ export default function DiscussionPage() {
  
     setError(null);
     try {
-      const response = await fetch('https://my-cheva-api.kakashispiritnews.my.id/forum', {
-        headers: { 'Authorization': `Bearer ${token}` },
+      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/forum', {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error('Failed to fetch forums');
-      const data = await response.json();
+      const data = res.data;
       if (data.status === 200 && Array.isArray(data.forums)) {
         // Sort forums to show newest first
         setForums(data.forums.sort((a: Forum, b: Forum) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
