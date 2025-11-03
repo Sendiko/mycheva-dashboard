@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-// import Link from 'next/link'; // <-- PREVIEW FIX: Uncomment in your local project.
-// import Image from 'next/image'; // <-- PREVIEW FIX: Uncomment in your local project.
+import Link from 'next/link'; // <-- PREVIEW FIX: Uncomment in your local project.
+import Image from 'next/image'; // <-- PREVIEW FIX: Uncomment in your local project.
 
 // --- Types ---
 type Event = {
@@ -27,11 +27,15 @@ type Announcement = {
   };
 };
 
-// --- NEW: Popular Forum type ---
+// --- UPDATED: Popular Forum type ---
 type PopularForum = {
   id: number;
   content: string;
   replyCount: number;
+  user: { // <-- Added user object
+    profileUrl: string;
+    name: string;
+  };
 };
 
 type Stat = {
@@ -79,45 +83,58 @@ const StatCard = ({ title, value, icon }: Stat) => (
   </div>
 );
 
-// --- UPDATED: Popular Forum Card Component ---
-const PopularForumCard = ({ forum }: { forum: PopularForum | null }) => (
-  // --- PREVIEW FIX: Replaced <Link> with <a> ---
-  <a 
-    href="/dashboard/discussion" 
-    className="block p-6 bg-white rounded-xl shadow-sm border border-neutral-200 transition-all hover:shadow-md hover:border-neutral-300" // <-- Removed h-full, added block and hover styles
-  >
-  {/* --- ORIGINAL CODE ---
-  <Link 
-    href="/dashboard/discussion" 
-    className="block p-6 bg-white rounded-xl shadow-sm border border-neutral-200 transition-all hover:shadow-md hover:border-neutral-300" // <-- Removed h-full, added block and hover styles
-  >
-  */}
-    <div className="flex items-center mb-3">
+// --- UPDATED: Popular Forums Card Component ---
+const PopularForumsCard = ({ forums }: { forums: PopularForum[] }) => (
+  <div className="p-6 bg-white rounded-xl shadow-sm border border-neutral-200">
+    <div className="flex items-center mb-4">
        <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 text-primary-600">
         <span className="text-2xl">🔥</span>
       </div>
-      <h3 className="text-h5 text-neutral-900 ml-3">Hottest Discussion</h3>
+      <h3 className="text-h5 text-neutral-900 ml-3">Hottest Discussions</h3>
     </div>
-    {forum ? (
-      <div>
-        <p className="text-body-md text-neutral-700 line-clamp-2 mb-2">
-          {forum.content}
-        </p>
-        <p className="text-h5 font-bold text-primary-700">
-          {forum.replyCount} Replies
-        </p>
-      </div>
-    ) : (
-      <p className="text-neutral-600">No popular discussions yet.</p>
-    )}
-  {/* </Link> */}
-  </a>
+    
+    <div className="space-y-4">
+      {forums.length > 0 ? (
+        forums.map(forum => (
+          <Link 
+            key={forum.id}
+            href="/dashboard/forums" 
+            className="block p-4 rounded-lg bg-neutral-50 hover:bg-neutral-100 transition-all"
+          >
+            <div className="flex items-center space-x-2 mb-2">
+              <Image
+                src={forum.user.profileUrl}
+                alt={forum.user.name}
+                width={24}
+                height={24}
+                className="rounded-full object-cover h-6 w-6"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = `https://placehold.co/24x24/DEDEDE/424242?text=${forum.user.name.charAt(0)}`;
+                }}
+              />
+              <span className="text-sm font-semibold text-neutral-800">{forum.user.name}</span>
+            </div>
+            <p className="text-body-md text-neutral-700 line-clamp-2 mb-1">
+              {forum.content}
+            </p>
+            <p className="text-sm font-bold text-primary-700">
+              {forum.replyCount} Replies
+            </p>
+          </Link>
+        ))
+      ) : (
+        <p className="text-neutral-600">No popular discussions yet.</p>
+      )}
+    </div>
+  </div>
 );
 
 
 // --- Next Meeting Card Component ---
 const NextMeetingCard = ({ meeting }: { meeting: Event | null }) => (
-  <div className="p-6 bg-white rounded-xl shadow-sm border border-neutral-200 h-full">
+  <div className="p-6 bg-white rounded-xl shadow-sm border border-neutral-200">
     <h3 className="text-h4 text-neutral-900 mb-4">Next Meeting</h3>
     {meeting ? (
       <div>
@@ -139,38 +156,25 @@ const NextMeetingCard = ({ meeting }: { meeting: Event | null }) => (
 
 // --- UPDATED: Latest Announcement Card (Singular) ---
 const LatestAnnouncementCard = ({ announcement }: { announcement: Announcement | null }) => (
-  <div className="p-6 bg-white rounded-xl shadow-sm border border-neutral-200 h-full">
+  <div className="p-6 bg-white rounded-xl shadow-sm border border-neutral-200">
     <div className="flex justify-between items-center mb-4">
       <h3 className="text-h4 text-neutral-900">Latest Announcement</h3>
-      {/* --- PREVIEW FIX: Replaced <Link> with <a> --- */}
-      <a href="/dashboard/announcements" className="text-body-md font-semibold text-primary-600 hover:text-primary-800">
-        View all
-      </a>
-      {/* --- ORIGINAL CODE ---
       <Link href="/dashboard/announcements" className="text-body-md font-semibold text-primary-600 hover:text-primary-800">
         View all
       </Link>
-      */}
     </div>
     {announcement ? (
       <div>
          {/* Optional Image */}
          {announcement.imageUrl && (
             <div className="relative w-full h-48 mb-4 rounded-lg overflow-hidden">
-               {/* --- PREVIEW FIX --- (Using <img> tag) */}
-              <img
-                src={`https://my-cheva-api.kakashispiritnews.my.id/public/${announcement.imageUrl.replace(/^\//, '')}`}
-                alt={announcement.title}
-                className="w-full h-full object-cover"
-              />
-              {/* --- ORIGINAL CODE for your Next.js project ---
+
               <Image
                 src={`https://my-cheva-api.kakashispiritnews.my.id/public/${announcement.imageUrl.replace(/^\//, '')}`}
                 alt={announcement.title}
                 layout="fill"
                 className="object-cover"
               />
-              */}
             </div>
          )}
         <h4 className="text-h5 font-semibold text-neutral-900 break-words">{announcement.title}</h4>
@@ -200,8 +204,8 @@ export default function DashboardPage() {
   const [nextMeeting, setNextMeeting] = useState<Event | null>(null);
   // --- UPDATED: Announcement is now single ---
   const [latestAnnouncement, setLatestAnnouncement] = useState<Announcement | null>(null);
-  // --- NEW: Popular Forum state ---
-  const [popularForum, setPopularForum] = useState<PopularForum | null>(null);
+  // --- UPDATED: Popular Forum state is now an array ---
+  const [popularForums, setPopularForums] = useState<PopularForum[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -305,8 +309,9 @@ export default function DashboardPage() {
       // --- Process Popular Forum (All Roles) ---
       if (!forumRes.ok) throw new Error('Failed to fetch popular forum');
       const forumData = await forumRes.json();
-      if (forumData.status === 200 && Array.isArray(forumData.forum) && forumData.forum.length > 0) {
-        setPopularForum(forumData.forum[0]);
+      if (forumData.status === 200 && Array.isArray(forumData.forum)) {
+        // --- UPDATED: Take top 3 from the array ---
+        setPopularForums(forumData.forum.slice(0, 3));
       }
 
       // --- Process Admin Stats (Admin Roles Only) ---
@@ -351,7 +356,7 @@ export default function DashboardPage() {
     
     return (
       <div className="mb-8">
-        <h2 className="text-h4 text-neutral-900 mb-4">At a Glance</h2>
+        <h2 className="font-bold text-neutral-900 mb-4">At a Glance</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {stats.map(stat => (
             <StatCard key={stat.title} {...stat} />
@@ -369,7 +374,8 @@ export default function DashboardPage() {
       </div>
       <div className="lg:col-span-1 space-y-6">
         <NextMeetingCard meeting={nextMeeting} />
-        <PopularForumCard forum={popularForum} />
+        {/* --- UPDATED: Use new component and state --- */}
+        <PopularForumsCard forums={popularForums} />
       </div>
     </div>
   );
