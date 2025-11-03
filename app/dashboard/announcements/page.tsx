@@ -94,7 +94,7 @@ const AnnouncementCard = ({
             <Image
               src={fullImageUrl} // <-- Use the new full URL
               alt={announcement.title}
-              layout="fill"
+              layout='fill'
               className="object-cover"
             />
             {/* --- NEW: Hover Overlay --- */}
@@ -112,30 +112,6 @@ const AnnouncementCard = ({
         <p className="text-body-md text-neutral-800 whitespace-pre-line">
           {announcement.content}
         </p>
-      </div>
-
-      {/* --- Card Footer --- */}
-      <div className="border-t border-neutral-200 px-6 py-4">
-        <div className="flex justify-end">
-          <button
-            className="text-neutral-600 hover:text-neutral-900"
-            title="Bookmark"
-          >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-              />
-            </svg>
-          </button>
-        </div>
       </div>
     </div>
   );
