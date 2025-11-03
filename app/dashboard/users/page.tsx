@@ -608,7 +608,7 @@ const EditUserModal = ({
                 </label>
                 <select
                   id="edit-user-role" value={roleId} onChange={(e) => setRoleId(e.target.value)}
-                  disabled={isReadOnly}
+                  disabled={user.roleId != 2}
                   className={`w-full rounded-lg border px-3 py-2 text-body-md outline-none bg-white ${isReadOnly ? 'bg-neutral-100 text-neutral-600 border-neutral-200 appearance-none' : 'border-neutral-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-200'}`}
                 >
                   <option value="" disabled>Select role</option>

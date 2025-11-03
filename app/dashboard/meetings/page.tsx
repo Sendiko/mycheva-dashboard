@@ -1288,9 +1288,7 @@ export default function MeetingsPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                         </button>
-                      </div>
-                    ) : (
-                      <div>
+
                         <button
                           onClick={() => handleOpenQrModal(item)}
                           title="QR Code"
@@ -1300,6 +1298,9 @@ export default function MeetingsPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h6v6H3V3zM15 3h6v6h-6V3zM3 15h6v6H3v-6zM8 8h8v8H8V8zM17 17h4v4h-4v-4z" />
                           </svg>
                         </button>
+                      </div>
+                    ) : (
+                      <div>
                         <button
                           onClick={() => handleOpenViewModal(item)}
                           title="View"
