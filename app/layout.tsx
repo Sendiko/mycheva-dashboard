@@ -1,21 +1,21 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Poppins } from 'next/font/google'; // 1. Import the font
+import './globals.css'; // <-- PREVIEW FIX: Commented out for preview
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// 2. Configure the font with all the weights from your style guide
+const poppins = Poppins({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-poppins', // 3. Set the CSS variable name
+  weight: ['400', '500', '600', '700'], // Regular, Medium, Semibold, Bold
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
-  title: "MyCheva Dashboard",
-  description: "A dashboard for MyCheva Application",
+  title: 'MyCheva Dashboard',
+  description: 'MyCheva Application Dashboard',
 };
+
 
 export default function RootLayout({
   children,
@@ -23,12 +23,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
+    // 4. Apply the variable to the <html> tag
+    <html lang="en" className={`${poppins.variable}`}> 
+      <body className={poppins.className}>{children}</body>
     </html>
   );
 }
