@@ -85,6 +85,10 @@ const EditProfileModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  // Photo upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   
   // Fetch divisions when modal opens
   useEffect(() => {
@@ -122,6 +126,9 @@ const EditProfileModal = ({
       setDivisionId(user.UserDatum.divisionId.toString());
       setPassword(''); // Reset password fields on open
       setPasswordConfirmation('');
+      // Reset photo selection when modal opens/changes
+      setSelectedFile(null);
+      setPreviewUrl(null);
     }
   }, [user]);
 
@@ -189,6 +196,60 @@ const EditProfileModal = ({
     } 
   };
 
+  // --- Photo upload handlers ---
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setSelectedFile(file);
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
+  useEffect(() => {
+    // cleanup object URL when component unmounts or file changes
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  const handlePhotoUpload = async () => {
+    if (!selectedFile || !token) {
+      setError('No file selected or not authenticated.');
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const form = new FormData();
+      form.append('photo', selectedFile);
+
+      // Using POST to /change_profile/:id as requested (omit Content-Type so browser sets boundary)
+      const res = await axios.post(`https://my-cheva-api.kakashispiritnews.my.id/change_profile/${user.id}`, form, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = res.data;
+      if (data.status !== 200) throw new Error(data.message || 'Failed to upload photo');
+
+      setSuccessMessage('Profile photo uploaded successfully.');
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      onProfileUpdated();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   // Reset form when closing
   const handleClose = () => {
     // No need to reset fields here, useEffect will handle it if opened again
@@ -215,7 +276,39 @@ const EditProfileModal = ({
         {isLoading ? (
           <div className="py-12 text-center text-neutral-600">Loading divisions...</div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <>
+            {/* --- Photo upload block --- */}
+            <div className="mb-4">
+              <label className="block text-body-md font-semibold text-neutral-800 mb-2">Profile Photo</label>
+              <div className="flex items-center space-x-4">
+                <Image
+                  src={user.profileUrl}
+                  alt={user.UserDatum.fullName}
+                  width={96}
+                  height={96}
+                  className="rounded-full object-cover h-24 w-24 border"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = `https://placehold.co/96x96/DEDEDE/424242?text=${user.name.charAt(0)}`;
+                  }}
+                />
+
+                <div className="flex-1">
+                  <input type="file" accept="image/*" onChange={handleFileChange} className="block w-full text-sm text-neutral-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700" />
+                  <div className="flex items-center space-x-3 mt-3">
+                    <button type="button" onClick={handlePhotoUpload} disabled={!selectedFile || isUploadingPhoto} className="rounded-lg bg-primary-500 py-2 px-4 font-semibold text-body-md text-white shadow-sm hover:bg-primary-600 disabled:opacity-50">
+                      {isUploadingPhoto ? 'Uploading...' : 'Upload Photo'}
+                    </button>
+                    {selectedFile && <span className="text-sm text-neutral-600">{selectedFile.name}</span>}
+                  </div>
+                  {error && <p className="text-body-sm text-error mt-2">{error}</p>}
+                  {successMessage && <p className="text-body-sm text-success mt-2">{successMessage}</p>}
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
             {/* Username */}
             <div>
               <label htmlFor="edit-user-name" className="block text-body-md font-semibold text-neutral-800 mb-1">
@@ -361,6 +454,7 @@ const EditProfileModal = ({
               </button>
             </div>
           </form>
+          </>
         )}
       </div>
     </div>
