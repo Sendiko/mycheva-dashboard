@@ -98,7 +98,7 @@ const PopularForumsCard = ({ forums }: { forums: PopularForum[] }) => (
         forums.map(forum => (
           <Link 
             key={forum.id}
-            href="/dashboard/forums" 
+            href={`/dashboard/forums/${forum.id}`} 
             className="block p-4 rounded-lg bg-neutral-50 hover:bg-neutral-100 transition-all"
           >
             <div className="flex items-center space-x-2 mb-2">
