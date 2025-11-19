@@ -133,7 +133,7 @@ const AddMeetingModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
+          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = res.data;
@@ -166,7 +166,7 @@ const AddMeetingModal = ({
       // API expects time with seconds, append ':00'
       const formattedTime = `${time}:00`;
 
-      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/event', {
+      const res = await axios.post('https://api-my.chevalierlabsas.org/event', {
         name,
         desc,
         type,
@@ -506,7 +506,7 @@ const EditMeetingModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
+          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = res.data;
@@ -553,7 +553,7 @@ const EditMeetingModal = ({
       const formattedTime = `${time}:00`;
 
       // API: PUT to /event/:id
-      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/event/${meeting.id}`, {
+      const res = await axios.put(`https://api-my.chevalierlabsas.org/event/${meeting.id}`, {
         name,
         desc,
         type,
@@ -777,7 +777,7 @@ const DeleteMeetingConfirmationModal = ({
 
     try {
       // API: DELETE to /event/:id
-      const res = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/event/${meeting.id}`, {
+      const res = await axios.delete(`https://api-my.chevalierlabsas.org/event/${meeting.id}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
@@ -979,7 +979,7 @@ export default function MeetingsPage() {
     // Don't show loading on refresh
     // setIsLoading(true);
     try {
-      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/event', {
+      const res = await axios.get('https://api-my.chevalierlabsas.org/event', {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,

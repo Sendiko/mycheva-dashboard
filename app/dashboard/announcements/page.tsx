@@ -50,7 +50,7 @@ const AnnouncementCard = ({
   // --- Construct the full image URL (FIXED) ---
   const fullImageUrl = announcement.imageUrl
     // Remove any leading slashes from imageUrl to prevent double slashes
-    ? `https://my-cheva-api.kakashispiritnews.my.id/public/${announcement.imageUrl.replace(/^\//, '')}`
+    ? `https://api-my.chevalierlabsas.org/public/${announcement.imageUrl.replace(/^\//, '')}`
     : null;
 
   return (
@@ -173,7 +173,7 @@ const AddAnnouncementModal = ({
     }
 
     try {
-      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/announcement', formData, {
+      const res = await axios.post('https://api-my.chevalierlabsas.org/announcement', formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           // Let browser set Content-Type for FormData
@@ -374,7 +374,7 @@ const EditAnnouncementModal = ({
     }
 
     try {
-      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/announcement/${announcement.id}`, formData, {
+      const res = await axios.put(`https://api-my.chevalierlabsas.org/announcement/${announcement.id}`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -533,7 +533,7 @@ const DeleteConfirmationModal = ({
 
     try {
       // NOTE: Following your attendance pattern of sending ID in the body
-      const res = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/announcement/${announcement.id}`, {
+      const res = await axios.delete(`https://api-my.chevalierlabsas.org/announcement/${announcement.id}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
@@ -682,7 +682,7 @@ export default function AnnouncementsPage() {
     // setIsLoading(true); 
     setError(null);
     try {
-      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/announcement', {
+      const res = await axios.get('https://api-my.chevalierlabsas.org/announcement', {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,

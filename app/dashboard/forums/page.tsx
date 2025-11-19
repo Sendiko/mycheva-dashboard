@@ -156,7 +156,7 @@ const CreatePostForm = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/forum', 
+      const response = await axios.post('https://api-my.chevalierlabsas.org/forum', 
         {
           content,
           userId,
@@ -240,7 +240,7 @@ const EditForumModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/forum/${post.id}`,
+      const response = await axios.put(`https://api-my.chevalierlabsas.org/forum/${post.id}`,
         { content },
         {
           headers: { 'Authorization': `Bearer ${token}` },
@@ -293,7 +293,7 @@ const DeleteForumModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/forum/${post.id}`, {
+      const response = await axios.delete(`https://api-my.chevalierlabsas.org/forum/${post.id}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (response.data.status !== 200) throw new Error(response.data.message || 'Failed to delete post');
@@ -367,7 +367,7 @@ export default function DiscussionPage() {
  
     setError(null);
     try {
-      const response = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/forum', {
+      const response = await axios.get('https://api-my.chevalierlabsas.org/forum', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = response.data;

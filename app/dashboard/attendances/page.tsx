@@ -139,14 +139,14 @@ const AddAttendanceModal = ({
         setError(null);
         try {
           // Fetch Users
-          const userRes = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/user/all', {
+          const userRes = await axios.get('https://api-my.chevalierlabsas.org/user/all', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const userData = userRes.data;
           if (userData.status === 200) setUsers(userData.users);
 
           // Fetch Events
-          const eventRes = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/event', {
+          const eventRes = await axios.get('https://api-my.chevalierlabsas.org/event', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const eventData = eventRes.data;
@@ -176,7 +176,7 @@ const AddAttendanceModal = ({
     setSuccessMessage(null); // Clear messages
 
     try {
-      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/attendance', {
+      const res = await axios.post('https://api-my.chevalierlabsas.org/attendance', {
         userId: Number(selectedUserId),
         eventId: Number(selectedEventId),
         status: selectedStatus,
@@ -365,7 +365,7 @@ const EditAttendanceModal = ({
 
     try {
       // Per your API spec: PUT to /attendance with ID and status in body
-      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/attendance/${attendance.id}`, {
+      const res = await axios.put(`https://api-my.chevalierlabsas.org/attendance/${attendance.id}`, {
         status: selectedStatus,
       }, {
         headers: { 'Authorization': `Bearer ${token}` },
@@ -513,7 +513,7 @@ const DeleteConfirmationModal = ({
 
     try {
       // Per your API spec: DELETE to /attendance with ID in body
-      const res = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/attendance/${attendance.id}`, {
+      const res = await axios.delete(`https://api-my.chevalierlabsas.org/attendance/${attendance.id}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -612,7 +612,7 @@ export default function AttendancesPage() {
 
     setIsLoading(true);
     try {
-      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/attendance', {
+      const res = await axios.get('https://api-my.chevalierlabsas.org/attendance', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
