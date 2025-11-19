@@ -45,6 +45,7 @@ jobs:
           script: |
             cd mycheva-dashboard/
             git pull origin deployment 
+            nvm use --lts
             npm install --omit=dev 
             npm run build 
             pm2 restart mycheva
