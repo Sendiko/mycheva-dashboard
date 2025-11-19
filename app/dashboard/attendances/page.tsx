@@ -103,21 +103,21 @@ const getNestedValue = (obj: any, path: string) => {
 
 
 // --- AddAttendanceModal Component ---
-const AddAttendanceModal = ({ 
-  isOpen, 
-  onClose, 
+const AddAttendanceModal = ({
+  isOpen,
+  onClose,
   token,
   onAttendanceAdded
-}: { 
-  isOpen: boolean, 
-  onClose: () => void, 
+}: {
+  isOpen: boolean,
+  onClose: () => void,
   token: string | null,
   onAttendanceAdded: () => void
 }) => {
   // Dropdown data state
   const [users, setUsers] = useState<User[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  
+
   // Form input state
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedEventId, setSelectedEventId] = useState('');
@@ -128,7 +128,7 @@ const AddAttendanceModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  
+
   const statusOptions = ['present', 'absent', 'excused', 'sick'];
 
   // Fetch users and events when modal opens
@@ -170,7 +170,7 @@ const AddAttendanceModal = ({
       setSuccessMessage(null); // Clear any previous success
       return;
     }
-    
+
     setIsSubmitting(true);
     setError(null);
     setSuccessMessage(null); // Clear messages
@@ -199,7 +199,7 @@ const AddAttendanceModal = ({
     } catch (err) {
       setError((err as Error).message);
       setIsSubmitting(false);
-    } 
+    }
   };
 
   // Reset form when closing
@@ -229,7 +229,7 @@ const AddAttendanceModal = ({
             </svg>
           </button>
         </div>
-        
+
         {isLoading ? (
           <div className="py-12 text-center text-neutral-600">Loading form data...</div>
         ) : (
@@ -289,7 +289,7 @@ const AddAttendanceModal = ({
                 ))}
               </select>
             </div>
-            
+
             {/* --- Improved Feedback --- */}
             {error && (
               <p className="text-body-md text-error p-3 bg-error/10 rounded-lg">
@@ -345,7 +345,7 @@ const EditAttendanceModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  
+
   const statusOptions = ['present', 'absent', 'excused', 'sick'];
 
   // Update state if the prop changes (e.g., opening modal for a different user)
@@ -358,7 +358,7 @@ const EditAttendanceModal = ({
   // Handle form submission for EDIT (PUT)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     setIsSubmitting(true);
     setError(null);
     setSuccessMessage(null);
@@ -379,7 +379,7 @@ const EditAttendanceModal = ({
       // Success
       setSuccessMessage('Attendance updated successfully!');
       onAttendanceUpdated(); // Refresh the table
-      
+
       setTimeout(() => {
         handleClose();
       }, 1500);
@@ -414,7 +414,7 @@ const EditAttendanceModal = ({
             </svg>
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Read-only User */}
           <div>
@@ -452,7 +452,7 @@ const EditAttendanceModal = ({
               ))}
             </select>
           </div>
-          
+
           {/* Feedback */}
           {error && (
             <p className="text-body-md text-error p-3 bg-error/10 rounded-lg">
@@ -595,13 +595,13 @@ export default function AttendancesPage() {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'ascending' });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
-  
+
   // --- NEW: State for Edit/Delete Modals ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
 
-  
+
   // --- Refactored fetchAttendances ---
   const fetchAttendances = useCallback(async () => {
     if (!token) {
@@ -674,7 +674,7 @@ export default function AttendancesPage() {
         const aValue = getNestedValue(a, sortConfig.key);
         // @ts-ignore
         const bValue = getNestedValue(b, sortConfig.key);
-        
+
         let comparison = 0;
 
         if (aValue === null || aValue === undefined) comparison = -1;
@@ -687,7 +687,7 @@ export default function AttendancesPage() {
         } else if (aValue < bValue) {
           comparison = -1;
         }
-        
+
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
     }
@@ -725,29 +725,10 @@ export default function AttendancesPage() {
 
   return (
     <div>
-      <h1 className="text-4xl text-neutral-900 mb-6">
-        Attendances
-      </h1>
-      
-      {/* --- Top Bar: Search and Add Button --- */}
-      <div className="flex justify-between items-center mb-4">
-        {/* --- Search Bar --- */}
-        <div className="relative">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-            <svg className="h-5 w-5 text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </span>
-          <input
-            type="text"
-            placeholder="Search by name, event, date, or status..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full max-w-sm rounded-lg border border-neutral-300 py-2 pl-10 pr-4 text-body-md text-neutral-800 placeholder-neutral-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
-          />
-        </div>
-        
-        {/* --- Add New Button --- */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-4xl text-neutral-900">
+          Attendances
+        </h1>
         <button
           className="flex items-center space-x-2 rounded-lg bg-primary-500 py-2 px-4 text-white font-semibold text-body-md shadow-sm hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           onClick={() => setIsModalOpen(true)}
@@ -758,6 +739,23 @@ export default function AttendancesPage() {
           <span>Add New</span>
         </button>
       </div>
+      {/* --- Top Bar: Search and Add Button --- */}
+      <div className="mb-4">
+        <div className="relative">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+            <svg className="h-5 w-5 text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            placeholder="Search by name, type, details, or date..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full max-w-sm rounded-lg border border-neutral-300 py-2 pl-10 pr-4 text-body-md text-neutral-800 placeholder-neutral-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+          />
+        </div>
+      </div>
 
       {/* Table Container */}
       <div className="overflow-x-auto rounded-lg shadow-md border border-neutral-200">
@@ -766,9 +764,9 @@ export default function AttendancesPage() {
           <thead className="border-b border-primary-200 bg-primary-50">
             <tr className="text-body-sm font-semibold text-primary-800">
               <th className="p-4">#</th>
-              
+
               {/* Sortable Headers */}
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('user.UserDatum.fullName')}
               >
@@ -776,7 +774,7 @@ export default function AttendancesPage() {
                   Person {getSortIcon('user.UserDatum.fullName')}
                 </div>
               </th>
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('Event.name')}
               >
@@ -784,7 +782,7 @@ export default function AttendancesPage() {
                   Event Name {getSortIcon('Event.name')}
                 </div>
               </th>
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('Event.date')}
               >
@@ -792,7 +790,7 @@ export default function AttendancesPage() {
                   Date {getSortIcon('Event.date')}
                 </div>
               </th>
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('status')}
               >
@@ -804,7 +802,7 @@ export default function AttendancesPage() {
               <th className="p-4">Actions</th>
             </tr>
           </thead>
-          
+
           {/* Table Body: Conditional Rendering */}
           <tbody>
             {isLoading && (!attendances || attendances.length === 0) ? (
@@ -831,8 +829,8 @@ export default function AttendancesPage() {
             ) : (
               // --- Data State ---
               processedAttendances.map((item, index) => (
-                <tr 
-                  key={item.id} 
+                <tr
+                  key={item.id}
                   className={`
                     border-b border-neutral-200 text-body-md text-neutral-800
                     ${index % 2 === 0 ? 'bg-white' : 'bg-neutral-50'}
@@ -842,7 +840,7 @@ export default function AttendancesPage() {
                   <td className="p-4 font-medium text-neutral-500">
                     {index + 1}
                   </td>
-                  
+
                   {/* Person (Photo + Name) */}
                   <td className="p-4">
                     <div className="flex items-center space-x-3">
@@ -863,17 +861,17 @@ export default function AttendancesPage() {
                       </span>
                     </div>
                   </td>
-                  
+
                   {/* Event Name */}
                   <td className="p-4">
                     {item.Event.name}
                   </td>
-                  
+
                   {/* Date - Now formatted! */}
                   <td className="p-4">
                     {formatDate(item.Event.date)}
                   </td>
-                  
+
                   {/* Status */}
                   <td className="p-4">
                     <StatusBadge status={item.status} />
@@ -908,15 +906,15 @@ export default function AttendancesPage() {
           </tbody>
         </table>
       </div>
-      
+
       {/* --- Render Modals --- */}
-      <AddAttendanceModal 
+      <AddAttendanceModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         token={token}
         onAttendanceAdded={fetchAttendances}
       />
-      
+
       {/* --- NEW: Render Edit/Delete Modals --- */}
       {selectedAttendance && (
         <EditAttendanceModal
@@ -927,7 +925,7 @@ export default function AttendancesPage() {
           attendance={selectedAttendance}
         />
       )}
-      
+
       {selectedAttendance && (
         <DeleteConfirmationModal
           isOpen={isDeleteModalOpen}
