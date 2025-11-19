@@ -95,7 +95,7 @@ const AddUserModal = ({
         setIsLoading(true);
         setError(null);
         try {
-      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
+      const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
         headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = res.data;
@@ -130,7 +130,7 @@ const AddUserModal = ({
     setIsSubmitting(true);
 
     try {
-      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/register', {
+      const res = await axios.post('https://api-my.chevalierlabsas.org/register', {
         name,
         fullName,
         nim,
@@ -406,7 +406,7 @@ const EditUserModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
+          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = res.data;
@@ -478,7 +478,7 @@ const EditUserModal = ({
 
     try {
       // API: PUT to /user/:id
-      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/user/${user.id}`, body, {
+      const res = await axios.put(`https://api-my.chevalierlabsas.org/user/${user.id}`, body, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
@@ -608,7 +608,7 @@ const EditUserModal = ({
                 </label>
                 <select
                   id="edit-user-role" value={roleId} onChange={(e) => setRoleId(e.target.value)}
-                  disabled={isReadOnly}
+                  disabled={user.roleId != 2}
                   className={`w-full rounded-lg border px-3 py-2 text-body-md outline-none bg-white ${isReadOnly ? 'bg-neutral-100 text-neutral-600 border-neutral-200 appearance-none' : 'border-neutral-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-200'}`}
                 >
                   <option value="" disabled>Select role</option>
@@ -725,7 +725,7 @@ const DeleteUserConfirmationModal = ({
 
     try {
       // API: DELETE to /user/delete/:id
-      const res = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/user/delete/${user.id}`, {
+      const res = await axios.delete(`https://api-my.chevalierlabsas.org/user/delete/${user.id}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
@@ -828,7 +828,7 @@ export default function UserManagementPage() {
     // setIsLoading(true); 
     setError(null);
     try {
-      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/user/all?detailed=true', {
+      const res = await axios.get('https://api-my.chevalierlabsas.org/user/all?detailed=true', {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,

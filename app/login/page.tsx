@@ -27,7 +27,7 @@ export default function LoginPage() {
     setSuccess(null);
 
     try {
-      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/login', { name, password, mobile: false }, {
+      const res = await axios.post('https://api-my.chevalierlabsas.org/login', { name, password, mobile: false }, {
         headers: { 'Content-Type': 'application/json' }
       });
 

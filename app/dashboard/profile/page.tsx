@@ -97,7 +97,7 @@ const EditProfileModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
+          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = res.data;
@@ -170,7 +170,7 @@ const EditProfileModal = ({
 
     try {
       // API: PUT to /user/:id
-      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/user/${user.id}`, body, {
+      const res = await axios.put(`https://api-my.chevalierlabsas.org/user/${user.id}`, body, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`, 
@@ -230,7 +230,7 @@ const EditProfileModal = ({
       form.append('photo', selectedFile);
 
       // Using POST to /change_profile/:id as requested (omit Content-Type so browser sets boundary)
-      const res = await axios.post(`https://my-cheva-api.kakashispiritnews.my.id/change_profile/${user.id}`, form, {
+      const res = await axios.post(`https://api-my.chevalierlabsas.org/change_profile/${user.id}`, form, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -498,7 +498,7 @@ export default function ProfilePage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await axios.get(`https://my-cheva-api.kakashispiritnews.my.id/userdata/${userId}`, {
+      const res = await axios.get(`https://api-my.chevalierlabsas.org/userdata/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = res.data;

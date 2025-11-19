@@ -133,7 +133,7 @@ const CreateReplyForm = ({
 
     setIsSubmitting(true);
     try {
-      const response = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/replies',
+      const response = await axios.post('https://api-my.chevalierlabsas.org/replies',
         {
           content,
           userId,
@@ -244,7 +244,7 @@ const EditReplyModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/replies/${reply.id}`,
+      const response = await axios.put(`https://api-my.chevalierlabsas.org/replies/${reply.id}`,
         { content },
         {
           headers: { 'Authorization': `Bearer ${token}` },
@@ -298,7 +298,7 @@ const DeleteReplyModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/replies/${reply.id}`, {
+      const response = await axios.delete(`https://api-my.chevalierlabsas.org/replies/${reply.id}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (response.data.status !== 200) throw new Error(response.data.message || 'Failed to delete reply');
@@ -370,7 +370,7 @@ export default function ForumDetailPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`https://my-cheva-api.kakashispiritnews.my.id/forum/${forumId}`, {
+      const response = await axios.get(`https://api-my.chevalierlabsas.org/forum/${forumId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = response.data;

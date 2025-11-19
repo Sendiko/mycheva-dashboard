@@ -170,7 +170,7 @@ const LatestAnnouncementCard = ({ announcement }: { announcement: Announcement |
             <div className="relative w-full h-48 mb-4 rounded-lg overflow-hidden">
 
               <Image
-                src={`https://my-cheva-api.kakashispiritnews.my.id/public/${announcement.imageUrl.replace(/^\//, '')}`}
+                src={`https://api-my.chevalierlabsas.org/public/${announcement.imageUrl.replace(/^\//, '')}`}
                 alt={announcement.title}
                 layout="fill"
                 className="object-cover"
@@ -231,7 +231,7 @@ export default function DashboardPage() {
     const fetchUserData = async () => {
       try {
         const headers = { 'Authorization': `Bearer ${token}` };
-        const response = await fetch(`https://my-cheva-api.kakashispiritnews.my.id/userdata/${userId}`, { headers });
+        const response = await fetch(`https://api-my.chevalierlabsas.org/userdata/${userId}`, { headers });
         if (!response.ok) throw new Error('Failed to fetch user data');
         
         const data = await response.json();
@@ -259,12 +259,12 @@ export default function DashboardPage() {
     setError(null);
     
     // --- URLs to fetch ---
-    const usersUrl = 'https://my-cheva-api.kakashispiritnews.my.id/user/all';
-    const attendanceUrl = 'https://my-cheva-api.kakashispiritnews.my.id/attendance';
-    const eventsUrl = 'https://my-cheva-api.kakashispiritnews.my.id/event';
+    const usersUrl = 'https://api-my.chevalierlabsas.org/user/all';
+    const attendanceUrl = 'https://api-my.chevalierlabsas.org/attendance';
+    const eventsUrl = 'https://api-my.chevalierlabsas.org/event';
     // --- NEW Endpoints ---
-    const latestAnnouncementUrl = 'https://my-cheva-api.kakashispiritnews.my.id/announcements/latest';
-    const popularForumUrl = 'https://my-cheva-api.kakashispiritnews.my.id/forums/popular';
+    const latestAnnouncementUrl = 'https://api-my.chevalierlabsas.org/announcements/latest';
+    const popularForumUrl = 'https://api-my.chevalierlabsas.org/forums/popular';
 
     try {
       const headers = { 'Authorization': `Bearer ${token}` };

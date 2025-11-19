@@ -20,7 +20,13 @@ const nextConfig: NextConfig = {
         hostname: "mycheva-fe-three.vercel.app",
         port: "",
         pathname: "/**", // Allows all paths from via.placeholder.com
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'api-my.chevalierlabsas.org',
+        port: '',
+        pathname: '/**', // Allows all paths from this domain
+      },
     ],
   },
 };

@@ -63,7 +63,7 @@ const AddRoadmapModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
+          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = res.data;
@@ -92,7 +92,7 @@ const AddRoadmapModal = ({
     setSuccessMessage(null);
 
     try {
-      const res = await axios.post('https://my-cheva-api.kakashispiritnews.my.id/roadmap', {
+      const res = await axios.post('https://api-my.chevalierlabsas.org/roadmap', {
         title,
         desc,
         divisionId: Number(divisionId),
@@ -228,7 +228,7 @@ const EditRoadmapModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/division', {
+          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = res.data;
@@ -266,7 +266,7 @@ const EditRoadmapModal = ({
     setSuccessMessage(null);
 
     try {
-      const res = await axios.put(`https://my-cheva-api.kakashispiritnews.my.id/roadmap/${roadmap.id}`, {
+      const res = await axios.put(`https://api-my.chevalierlabsas.org/roadmap/${roadmap.id}`, {
         title,
         desc,
         divisionId: Number(divisionId),
@@ -391,7 +391,7 @@ const DeleteRoadmapConfirmationModal = ({
     setError(null);
 
     try {
-      const res = await axios.delete(`https://my-cheva-api.kakashispiritnews.my.id/roadmap/${roadmap.id}`, {
+      const res = await axios.delete(`https://api-my.chevalierlabsas.org/roadmap/${roadmap.id}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -539,7 +539,7 @@ export default function RoadmapPage() {
  
     setError(null);
     try {
-      const res = await axios.get('https://my-cheva-api.kakashispiritnews.my.id/roadmap', {
+      const res = await axios.get('https://api-my.chevalierlabsas.org/roadmap', {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
