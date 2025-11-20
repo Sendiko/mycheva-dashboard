@@ -43,7 +43,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-[var(--color-primary-600)] font-bold text-2xl">Chevalier Lab</span>
+              <span className="text-[var(--color-primary-600)] font-bold text-2xl">Chevalier Laboratory</span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
               <a href="#home" className="text-[var(--color-neutral-600)] hover:text-[var(--color-primary-600)] transition-colors">Home</a>

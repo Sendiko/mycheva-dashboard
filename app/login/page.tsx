@@ -51,14 +51,6 @@ export default function LoginPage() {
       {/* Left Pane - Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-12 lg:px-24 py-12 z-10">
         <div className="w-full max-w-md mx-auto">
-          {/* Logo */}
-          <div className="flex items-center gap-2 mb-12">
-            {/* Placeholder for logo if image is missing, or use the image if available */}
-            <div className="w-10 h-10 rounded-lg bg-[var(--color-primary-600)] flex items-center justify-center text-white font-bold text-xl">
-              C
-            </div>
-            <span className="text-2xl font-bold text-[var(--color-neutral-900)]">Chevalier Lab</span>
-          </div>
 
           <div className="mb-10">
             <h1 className="text-4xl font-bold text-[var(--color-neutral-900)] mb-3">Welcome Back</h1>
