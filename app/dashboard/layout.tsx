@@ -137,7 +137,7 @@ export default function DashboardLayout({
         <div className="h-full flex flex-col">
           {/* Logo Area */}
           <div className="h-20 flex items-center justify-between px-4 border-b border-neutral-200">
-            <Link className="flex items-center" href='/dashboard'>
+            <Link className="flex items-center justify-center flex-1" href='/dashboard'>
               <Image src="/image/logo.png" alt="Logo" width={40} height={40} />
               <div className='m-1'></div>
               <span className="text-xl font-bold text-primary-500">MyCheva</span>
