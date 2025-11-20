@@ -1,10 +1,10 @@
-'use client'; 
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image'; // <-- PREVIEW FIX
-import Link from 'next/link'; // <-- PREVIEW FIX
-import { useParams } from 'next/navigation'; // <-- PREVIEW FIX
-import axios from 'axios';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import api from '@/lib/axios';
 
 // --- Types (Copied from main discussion page) ---
 type User = {
@@ -55,13 +55,13 @@ const formatTimestamp = (dateString: string) => {
 };
 
 // --- Reply Card Component ---
-const ReplyCard = ({ 
-  reply, 
+const ReplyCard = ({
+  reply,
   currentUserId,
   onEditClick,
   onDeleteClick
-}: { 
-  reply: Reply, 
+}: {
+  reply: Reply,
   currentUserId: number | null,
   onEditClick: (reply: Reply) => void,
   onDeleteClick: (reply: Reply) => void
@@ -82,7 +82,7 @@ const ReplyCard = ({
           target.src = `https://placehold.co/32x32/DEDEDE/424242?text=${reply.user.name.charAt(0)}`;
         }}
       />
-      
+
       {/* Content */}
       <div className="flex-1">
         <div className="flex items-center justify-between">
@@ -133,23 +133,16 @@ const CreateReplyForm = ({
 
     setIsSubmitting(true);
     try {
-      const response = await axios.post('https://api-my.chevalierlabsas.org/replies',
-        {
-          content,
-          userId,
-          forumId,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-      
+      const response = await api.post('/replies', {
+        content,
+        userId,
+        forumId,
+      });
+
       if (response.data.status !== 201) {
         throw new Error(response.data.message || 'Failed to post reply');
       }
-      
+
       setContent('');
       onReplyAdded(); // Refresh the forum list
 
@@ -183,10 +176,9 @@ const CreateReplyForm = ({
 // --- Main Post Component (for detail page) ---
 const MainPostCard = ({ post }: { post: Forum }) => {
   return (
-     <div className="w-full bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden mb-6">
+    <div className="w-full bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden mb-6">
       {/* Card Header */}
       <div className="flex space-x-4 p-6">
-        {/* <Image ... /> */} {/* PREVIEW FIX */}
         <img
           src={post.user.profileUrl}
           alt={post.user.name}
@@ -214,11 +206,11 @@ const MainPostCard = ({ post }: { post: Forum }) => {
         </p>
       </div>
       {/* Reply Count */}
-       <div className="border-t border-neutral-200 px-6 py-4">
-         <span className="font-semibold text-body-md text-neutral-800">
-           {post.Replies.length} {post.Replies.length === 1 ? 'Reply' : 'Replies'}
-         </span>
-       </div>
+      <div className="border-t border-neutral-200 px-6 py-4">
+        <span className="font-semibold text-body-md text-neutral-800">
+          {post.Replies.length} {post.Replies.length === 1 ? 'Reply' : 'Replies'}
+        </span>
+      </div>
     </div>
   );
 };
@@ -244,12 +236,7 @@ const EditReplyModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.put(`https://api-my.chevalierlabsas.org/replies/${reply.id}`,
-        { content },
-        {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }
-      );
+      const response = await api.put(`/replies/${reply.id}`, { content });
       if (response.data.status !== 200) throw new Error(response.data.message || 'Failed to update reply');
       onPostUpdated();
       onClose();
@@ -298,9 +285,7 @@ const DeleteReplyModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.delete(`https://api-my.chevalierlabsas.org/replies/${reply.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const response = await api.delete(`/replies/${reply.id}`);
       if (response.data.status !== 200) throw new Error(response.data.message || 'Failed to delete reply');
       onPostUpdated();
       onClose();
@@ -331,17 +316,17 @@ const DeleteReplyModal = ({
 
 // --- Main Forum Detail Page Component ---
 export default function ForumDetailPage() {
-  const params = useParams(); // <-- PREVIEW FIX
-  const forumId = params?.forumId; // <-- PREVIEW FIX
+  const params = useParams();
+  const forumId = params?.forumId;
 
   const [forum, setForum] = useState<Forum | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Get user info from localStorage
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
-  
+
   // State for modals
   const [selectedReply, setSelectedReply] = useState<Reply | null>(null);
   const [isReplyEditModalOpen, setIsReplyEditModalOpen] = useState(false);
@@ -366,13 +351,11 @@ export default function ForumDetailPage() {
     if (!token || !forumId) {
       return;
     }
- 
+
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`https://api-my.chevalierlabsas.org/forum/${forumId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const response = await api.get(`/forum/${forumId}`);
       const data = response.data;
       if (data.status === 200 && data.forum) {
         setForum(data.forum);
@@ -382,7 +365,7 @@ export default function ForumDetailPage() {
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   }, [token, forumId]);
 
@@ -407,15 +390,10 @@ export default function ForumDetailPage() {
     <div className="max-w-3xl mx-auto">
       {/* Back Button */}
       <div className="mb-4">
-        {/* --- PREVIEW FIX: Replaced <Link> with <a> --- */}
-        <a href="/dashboard/forums" className="flex items-center space-x-2 text-body-md font-semibold text-primary-600 hover:text-primary-800">
-        {/* --- ORIGINAL CODE ---
-        <Link href="/dashboard/discussion" className="flex items-center space-x-2 text-body-md font-semibold text-primary-600 hover:text-primary-800">
-        */}
+        <Link href="/dashboard/forums" className="flex items-center space-x-2 text-body-md font-semibold text-primary-600 hover:text-primary-800">
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           <span>Back to all discussions</span>
-        {/* </Link> */}
-        </a>
+        </Link>
       </div>
 
       {isLoading ? (
@@ -428,7 +406,7 @@ export default function ForumDetailPage() {
         <>
           {/* --- Main Post --- */}
           <MainPostCard post={forum} />
-          
+
           {/* --- Create Reply Form --- */}
           <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-6 mb-6">
             <h3 className="text-h5 text-neutral-900 mb-4">Post a Reply</h3>
@@ -454,7 +432,7 @@ export default function ForumDetailPage() {
                   />
                 ))
               ) : (
-                 <p className="text-center text-sm text-neutral-500 py-4">Be the first to reply!</p>
+                <p className="text-center text-sm text-neutral-500 py-4">Be the first to reply!</p>
               )}
             </div>
           </div>
@@ -463,7 +441,7 @@ export default function ForumDetailPage() {
 
       {/* --- NEW: Render Reply Modals --- */}
       {selectedReply && (
-        <EditReplyModal 
+        <EditReplyModal
           isOpen={isReplyEditModalOpen}
           onClose={() => setIsReplyEditModalOpen(false)}
           token={token}
@@ -472,7 +450,7 @@ export default function ForumDetailPage() {
         />
       )}
       {selectedReply && (
-        <DeleteReplyModal 
+        <DeleteReplyModal
           isOpen={isReplyDeleteModalOpen}
           onClose={() => setIsReplyDeleteModalOpen(false)}
           token={token}

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
+import api from '@/lib/axios';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 // --- Helper function to format the date ---
@@ -39,14 +39,14 @@ type Announcement = {
 };
 
 // --- Announcement Card Component (Updated) ---
-const AnnouncementCard = ({ 
+const AnnouncementCard = ({
   announcement,
   onImageClick // <-- NEW: Prop to handle image click
-}: { 
+}: {
   announcement: Announcement,
   onImageClick: (url: string) => void
 }) => {
-  
+
   // --- Construct the full image URL (FIXED) ---
   const fullImageUrl = announcement.imageUrl
     // Remove any leading slashes from imageUrl to prevent double slashes
@@ -173,9 +173,8 @@ const AddAnnouncementModal = ({
     }
 
     try {
-      const res = await axios.post('https://api-my.chevalierlabsas.org/announcement', formData, {
+      const res = await api.post('/announcement', formData, {
         headers: {
-          'Authorization': `Bearer ${token}`,
           // Let browser set Content-Type for FormData
         },
       });
@@ -224,7 +223,7 @@ const AddAnnouncementModal = ({
             </svg>
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div>
@@ -279,7 +278,7 @@ const AddAnnouncementModal = ({
               </p>
             )}
           </div>
-          
+
           {/* Feedback Messages */}
           {error && (
             <p className="text-body-md text-error p-3 bg-error/10 rounded-lg">
@@ -374,11 +373,7 @@ const EditAnnouncementModal = ({
     }
 
     try {
-      const res = await axios.put(`https://api-my.chevalierlabsas.org/announcement/${announcement.id}`, formData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const res = await api.put(`/announcement/${announcement.id}`, formData);
 
       const data = res.data;
       if (data.status !== 200) {
@@ -387,7 +382,7 @@ const EditAnnouncementModal = ({
 
       setSuccessMessage('Announcement updated successfully!');
       onAnnouncementUpdated();
-      
+
       setTimeout(() => {
         handleClose();
       }, 1500);
@@ -419,7 +414,7 @@ const EditAnnouncementModal = ({
             </svg>
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div>
@@ -472,7 +467,7 @@ const EditAnnouncementModal = ({
               </p>
             )}
           </div>
-          
+
           {/* Feedback */}
           {error && (
             <p className="text-body-md text-error p-3 bg-error/10 rounded-lg">
@@ -533,11 +528,7 @@ const DeleteConfirmationModal = ({
 
     try {
       // NOTE: Following your attendance pattern of sending ID in the body
-      const res = await axios.delete(`https://api-my.chevalierlabsas.org/announcement/${announcement.id}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+      const res = await api.delete(`/announcement/${announcement.id}`, {
         data: {
           announcementId: announcement.id,
         },
@@ -610,11 +601,11 @@ const DeleteConfirmationModal = ({
 // --- NEW: FullScreenImageModal Component ---
 const FullScreenImageModal = ({ imageUrl, onClose }: { imageUrl: string, onClose: () => void }) => {
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
       onClick={onClose} // Click background to close
     >
-      <button 
+      <button
         className="absolute top-4 right-4 text-white/70 hover:text-white"
         onClick={onClose}
         title="Close"
@@ -623,15 +614,15 @@ const FullScreenImageModal = ({ imageUrl, onClose }: { imageUrl: string, onClose
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-      
-      <div 
+
+      <div
         className="relative max-w-full max-h-full"
         onClick={(e) => e.stopPropagation()} // Prevent click on image from closing
       >
-        <Image 
-          src={imageUrl} 
-          alt="Full size announcement" 
-          className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" 
+        <Image
+          src={imageUrl}
+          alt="Full size announcement"
+          className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
         />
       </div>
     </div>
@@ -648,7 +639,7 @@ export default function AnnouncementsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [fullScreenImageUrl, setFullScreenImageUrl] = useState<string | null>(null);
-  
+
   // --- NEW: State for Edit/Delete Modals ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -677,17 +668,12 @@ export default function AnnouncementsPage() {
     if (!token) {
       return;
     }
-    
+
     // Don't show loading spinner on refresh, only on initial load
     // setIsLoading(true); 
     setError(null);
     try {
-      const res = await axios.get('https://api-my.chevalierlabsas.org/announcement', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const res = await api.get('/announcement');
 
       const data = res.data;
       if (data.status === 200 && Array.isArray(data.announcements)) {
@@ -757,12 +743,12 @@ export default function AnnouncementsPage() {
             <div key={item.id} className="relative flex items-start space-x-3 mb-6">
               {/* Card takes up most of the space */}
               <div className="flex-1">
-                <AnnouncementCard 
-                  announcement={item} 
+                <AnnouncementCard
+                  announcement={item}
                   onImageClick={setFullScreenImageUrl} // <-- NEW: Pass handler
                 />
               </div>
-              
+
               {/* Actions: Conditionally rendered */}
               {userId && item.user.id === Number(userId) && (
                 <div className="flex flex-col space-y-2 pt-6">
@@ -800,14 +786,6 @@ export default function AnnouncementsPage() {
         onAnnouncementAdded={fetchAnnouncements}
       />
 
-      {/* --- NEW: Render the Full Screen Image Overlay --- */}
-      {fullScreenImageUrl && (
-        <FullScreenImageModal 
-          imageUrl={fullScreenImageUrl} 
-          onClose={() => setFullScreenImageUrl(null)}
-        />
-      )}
-
       {/* --- NEW: Render Edit/Delete Modals --- */}
       {selectedAnnouncement && (
         <EditAnnouncementModal
@@ -818,6 +796,7 @@ export default function AnnouncementsPage() {
           announcement={selectedAnnouncement}
         />
       )}
+
       {selectedAnnouncement && (
         <DeleteConfirmationModal
           isOpen={isDeleteModalOpen}
@@ -825,6 +804,14 @@ export default function AnnouncementsPage() {
           token={token}
           onAnnouncementDeleted={fetchAnnouncements}
           announcement={selectedAnnouncement}
+        />
+      )}
+
+      {/* --- NEW: Full Screen Image Modal --- */}
+      {fullScreenImageUrl && (
+        <FullScreenImageModal
+          imageUrl={fullScreenImageUrl}
+          onClose={() => setFullScreenImageUrl(null)}
         />
       )}
     </div>

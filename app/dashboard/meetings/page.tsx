@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
+import api from '@/lib/axios';
 import QRCode from 'react-qr-code';
 
 // --- Helper function to format the date ---
@@ -133,9 +133,7 @@ const AddMeetingModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const res = await api.get('/division');
           const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
 
@@ -166,7 +164,7 @@ const AddMeetingModal = ({
       // API expects time with seconds, append ':00'
       const formattedTime = `${time}:00`;
 
-      const res = await axios.post('https://api-my.chevalierlabsas.org/event', {
+      const res = await api.post('/event', {
         name,
         desc,
         type,
@@ -174,11 +172,6 @@ const AddMeetingModal = ({
         date,
         time: formattedTime,
         divisionId: Number(divisionId),
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        }
       });
 
       const data = res.data;
@@ -506,9 +499,7 @@ const EditMeetingModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const res = await api.get('/division');
           const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
 
@@ -553,7 +544,7 @@ const EditMeetingModal = ({
       const formattedTime = `${time}:00`;
 
       // API: PUT to /event/:id
-      const res = await axios.put(`https://api-my.chevalierlabsas.org/event/${meeting.id}`, {
+      const res = await api.put(`/event/${meeting.id}`, {
         name,
         desc,
         type,
@@ -561,11 +552,6 @@ const EditMeetingModal = ({
         date,
         time: formattedTime,
         divisionId: Number(divisionId),
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        }
       });
 
       const data = res.data;
@@ -777,14 +763,7 @@ const DeleteMeetingConfirmationModal = ({
 
     try {
       // API: DELETE to /event/:id
-      const res = await axios.delete(`https://api-my.chevalierlabsas.org/event/${meeting.id}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        // If API requires body for DELETE, axios supports `data` here
-        // data: { eventId: meeting.id },
-      });
+      const res = await api.delete(`/event/${meeting.id}`);
 
       const data = res.data;
       // Check for successful status (might be 200 or 204 No Content)
@@ -979,12 +958,7 @@ export default function MeetingsPage() {
     // Don't show loading on refresh
     // setIsLoading(true);
     try {
-      const res = await axios.get('https://api-my.chevalierlabsas.org/event', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const res = await api.get('/event');
 
       const data = res.data;
 

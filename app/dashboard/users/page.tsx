@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
-import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
-
+import api from '@/lib/axios';
+import Image from 'next/image';
 
 // --- Define a type for the detailed user data ---
 type User = {
@@ -95,9 +94,7 @@ const AddUserModal = ({
         setIsLoading(true);
         setError(null);
         try {
-      const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
-        headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const res = await api.get('/division');
           const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
 
@@ -130,7 +127,7 @@ const AddUserModal = ({
     setIsSubmitting(true);
 
     try {
-      const res = await axios.post('https://api-my.chevalierlabsas.org/register', {
+      const res = await api.post('/register', {
         name,
         fullName,
         nim,
@@ -141,11 +138,6 @@ const AddUserModal = ({
         password,
         password_confirmation: passwordConfirmation,
         divisionId: Number(divisionId), // Ensure it's a number
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        }
       });
 
       const data = res.data;
@@ -406,9 +398,7 @@ const EditUserModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const res = await api.get('/division');
           const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
 
@@ -478,12 +468,7 @@ const EditUserModal = ({
 
     try {
       // API: PUT to /user/:id
-      const res = await axios.put(`https://api-my.chevalierlabsas.org/user/${user.id}`, body, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        }
-      });
+      const res = await api.put(`/user/${user.id}`, body);
 
       const data = res.data;
       if (data.status !== 200) {
@@ -725,12 +710,7 @@ const DeleteUserConfirmationModal = ({
 
     try {
       // API: DELETE to /user/delete/:id
-      const res = await axios.delete(`https://api-my.chevalierlabsas.org/user/delete/${user.id}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const res = await api.delete(`/user/delete/${user.id}`);
 
       const data = res.data;
       // Check for successful status (might be 200 or 204 No Content)
@@ -828,12 +808,7 @@ export default function UserManagementPage() {
     // setIsLoading(true); 
     setError(null);
     try {
-      const res = await axios.get('https://api-my.chevalierlabsas.org/user/all?detailed=true', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const res = await api.get('/user/all?detailed=true');
 
       const data = res.data;
 

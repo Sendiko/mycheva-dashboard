@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import axios from 'axios';
-import Image from 'next/image';
+import api from '@/lib/axios';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Lock, User } from 'lucide-react';
 
@@ -22,9 +21,7 @@ export default function LoginPage() {
     setSuccess(null);
 
     try {
-      const res = await axios.post('https://api-my.chevalierlabsas.org/login', { name, password, mobile: false }, {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const res = await api.post('/login', { name, password, mobile: false });
 
       const data = res.data;
 
@@ -43,8 +40,8 @@ export default function LoginPage() {
         setError(data.message || 'Login failed. Please try again.');
         setIsLoading(false);
       }
-    } catch (err) {
-      setError('An error occurred. Please check your connection.');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'An error occurred. Please check your connection.');
       setIsLoading(false);
     }
   };

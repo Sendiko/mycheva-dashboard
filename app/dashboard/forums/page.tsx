@@ -1,9 +1,9 @@
-'use client'; 
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image'; // <-- PREVIEW FIX
-import Link from 'next/link'; // <-- PREVIEW FIX
-import axios from 'axios';
+import Image from 'next/image';
+import Link from 'next/link';
+import api from '@/lib/axios';
 
 // --- Types ---
 type User = {
@@ -54,14 +54,14 @@ const formatTimestamp = (dateString: string) => {
 };
 
 // --- Forum Card Component (Simplified for Feed) ---
-const ForumCard = ({ 
-  post, 
-  currentUserId, 
+const ForumCard = ({
+  post,
+  currentUserId,
   onEditClick,
   onDeleteClick,
 }: {
-  post: Forum, 
-  currentUserId: number | null, 
+  post: Forum,
+  currentUserId: number | null,
   onEditClick: (post: Forum) => void,
   onDeleteClick: (post: Forum) => void,
 }) => {
@@ -72,7 +72,6 @@ const ForumCard = ({
       {/* --- Card Header --- */}
       <div className="flex space-x-4 p-6">
         {/* Profile Pic */}
-        {/* <Image ... /> */} {/* PREVIEW FIX */}
         <img
           src={post.user.profileUrl}
           alt={post.user.name}
@@ -85,7 +84,7 @@ const ForumCard = ({
             target.src = `https://placehold.co/48x48/DEDEDE/424242?text=${post.user.name.charAt(0)}`;
           }}
         />
-        
+
         {/* Content */}
         <div className="flex-1">
           <div className="flex items-center justify-between">
@@ -106,7 +105,7 @@ const ForumCard = ({
             )}
           </div>
           <span className="text-body-md text-neutral-500">{formatTimestamp(post.createdAt)}</span>
-          
+
           <Link href={`/dashboard/forums/${post.id}`} className="block mt-2">
             <p className="text-body-md text-neutral-800 whitespace-pre-line">
               {post.content}
@@ -129,18 +128,18 @@ const ForumCard = ({
 };
 
 // --- Create Post Form (Top of Page) ---
-const CreatePostForm = ({ 
-  token, 
+const CreatePostForm = ({
+  token,
   userId,
   userProfileUrl,
   userName,
-  onPostAdded 
-}: { 
-  token: string | null, 
+  onPostAdded
+}: {
+  token: string | null,
   userId: number | null,
   userProfileUrl: string | null,
   userName: string | null,
-  onPostAdded: () => void 
+  onPostAdded: () => void
 }) => {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -156,17 +155,10 @@ const CreatePostForm = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.post('https://api-my.chevalierlabsas.org/forum', 
-        {
-          content,
-          userId,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.post('/forum', {
+        content,
+        userId,
+      });
 
       if (response.data.status !== 201) {
         throw new Error(response.data.message || 'Failed to create post');
@@ -240,12 +232,7 @@ const EditForumModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.put(`https://api-my.chevalierlabsas.org/forum/${post.id}`,
-        { content },
-        {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }
-      );
+      const response = await api.put(`/forum/${post.id}`, { content });
       if (response.data.status !== 200) throw new Error(response.data.message || 'Failed to update post');
       onPostUpdated();
       onClose();
@@ -293,9 +280,7 @@ const DeleteForumModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.delete(`https://api-my.chevalierlabsas.org/forum/${post.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const response = await api.delete(`/forum/${post.id}`);
       if (response.data.status !== 200) throw new Error(response.data.message || 'Failed to delete post');
       onPostUpdated();
       onClose();
@@ -329,24 +314,24 @@ export default function DiscussionPage() {
   const [forums, setForums] = useState<Forum[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Get user info from localStorage
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [userProfileUrl, setUserProfileUrl] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
-  
+
   // State for modals
   const [selectedForum, setSelectedForum] = useState<Forum | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  
+
   // Get token and user info on mount
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUserId = localStorage.getItem('userId');
-    const storedProfileUrl = localStorage.getItem('profileUrl'); 
-    const storedName = localStorage.getItem('name'); 
+    const storedProfileUrl = localStorage.getItem('profileUrl');
+    const storedName = localStorage.getItem('name');
 
     if (!storedToken || !storedUserId) {
       setError('You are not authenticated.');
@@ -364,12 +349,10 @@ export default function DiscussionPage() {
     if (!token) {
       return;
     }
- 
+
     setError(null);
     try {
-      const response = await axios.get('https://api-my.chevalierlabsas.org/forum', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const response = await api.get('/forum');
       const data = response.data;
       if (data.status === 200 && Array.isArray(data.forums)) {
         // Sort forums to show newest first
@@ -380,7 +363,7 @@ export default function DiscussionPage() {
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   }, [token]);
 
@@ -414,7 +397,7 @@ export default function DiscussionPage() {
           userName={userName}
           onPostAdded={fetchForums}
         />
-      
+
         {/* --- Forum Feed --- */}
         {isLoading ? (
           <div className="text-center text-neutral-600 py-12">Loading discussions...</div>
@@ -424,9 +407,9 @@ export default function DiscussionPage() {
           <div className="text-center text-neutral-600 py-12">No discussions yet. Start one!</div>
         ) : (
           forums.map((post) => (
-            <ForumCard 
-              key={post.id} 
-              post={post} 
+            <ForumCard
+              key={post.id}
+              post={post}
               currentUserId={userId}
               onEditClick={handleOpenForumEdit}
               onDeleteClick={handleOpenForumDelete}
@@ -437,7 +420,7 @@ export default function DiscussionPage() {
 
       {/* --- Modals --- */}
       {selectedForum && (
-        <EditForumModal 
+        <EditForumModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           token={token}
@@ -446,7 +429,7 @@ export default function DiscussionPage() {
         />
       )}
       {selectedForum && (
-        <DeleteForumModal 
+        <DeleteForumModal
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}
           token={token}

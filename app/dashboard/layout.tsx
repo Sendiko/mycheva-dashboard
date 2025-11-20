@@ -15,6 +15,7 @@ const allMenuItems = [
   { id: 'discussion', name: 'Discussion Forum', href: '/dashboard/forums', icon: '💬' },
   { id: 'meetings', name: 'Meetings', href: '/dashboard/meetings', icon: '🤝' },
   { id: 'users', name: 'User Management', href: '/dashboard/users', icon: '👥' },
+  { id: 'roles', name: 'Roles', href: '/dashboard/roles', icon: '🛡️' },
   { id: 'profile', name: 'Profile', href: '/dashboard/profile', icon: '👤' },
 ];
 
@@ -33,7 +34,7 @@ const getVisibleMenuItems = (roleId: number | null) => {
       );
     case 3: // Coordinator
       return allMenuItems.filter(item =>
-        ['attendances', 'roadmap', 'discussion', 'meetings', 'users', 'profile'].includes(item.id)
+        ['attendances', 'roadmap', 'discussion', 'meetings', 'users', 'roles', 'profile'].includes(item.id)
       );
     case 4: // Core (Admin)
       return allMenuItems; // Show all

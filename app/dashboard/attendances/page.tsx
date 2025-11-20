@@ -1,9 +1,9 @@
-'use client'; // <-- Convert to Client Component
+'use client';
 
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
-import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
+import api from '@/lib/axios';
+import Image from 'next/image';
 
 // --- Helper function to format the date ---
 const formatDate = (dateString: string) => {
@@ -139,16 +139,12 @@ const AddAttendanceModal = ({
         setError(null);
         try {
           // Fetch Users
-          const userRes = await axios.get('https://api-my.chevalierlabsas.org/user/all', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const userRes = await api.get('/user/all');
           const userData = userRes.data;
           if (userData.status === 200) setUsers(userData.users);
 
           // Fetch Events
-          const eventRes = await axios.get('https://api-my.chevalierlabsas.org/event', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const eventRes = await api.get('/event');
           const eventData = eventRes.data;
           if (eventData.status === 200) setEvents(eventData.events);
 
@@ -176,12 +172,10 @@ const AddAttendanceModal = ({
     setSuccessMessage(null); // Clear messages
 
     try {
-      const res = await axios.post('https://api-my.chevalierlabsas.org/attendance', {
+      const res = await api.post('/attendance', {
         userId: Number(selectedUserId),
         eventId: Number(selectedEventId),
         status: selectedStatus,
-      }, {
-        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       const data = res.data;
@@ -365,10 +359,8 @@ const EditAttendanceModal = ({
 
     try {
       // Per your API spec: PUT to /attendance with ID and status in body
-      const res = await axios.put(`https://api-my.chevalierlabsas.org/attendance/${attendance.id}`, {
+      const res = await api.put(`/attendance/${attendance.id}`, {
         status: selectedStatus,
-      }, {
-        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       const data = res.data;
@@ -513,9 +505,7 @@ const DeleteConfirmationModal = ({
 
     try {
       // Per your API spec: DELETE to /attendance with ID in body
-      const res = await axios.delete(`https://api-my.chevalierlabsas.org/attendance/${attendance.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const res = await api.delete(`/attendance/${attendance.id}`);
 
       const data = res.data;
       if (data.status !== 200) {
@@ -612,9 +602,7 @@ export default function AttendancesPage() {
 
     setIsLoading(true);
     try {
-      const res = await axios.get('https://api-my.chevalierlabsas.org/attendance', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const res = await api.get('/attendance');
 
       const data = res.data;
 
@@ -853,7 +841,7 @@ export default function AttendancesPage() {
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.onerror = null; // prevent infinite loop
-                          target.src = `httpsD://placehold.co/40x40/DEDEDE/424242?text=${item.user.name.charAt(0)}`;
+                          target.src = `https://placehold.co/40x40/DEDEDE/424242?text=${item.user.name.charAt(0)}`;
                         }}
                       />
                       <span className="font-semibold">

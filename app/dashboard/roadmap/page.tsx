@@ -1,7 +1,7 @@
-'use client'; 
+'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
+import api from '@/lib/axios';
 
 // --- Define a type for the roadmap data ---
 type Roadmap = {
@@ -35,14 +35,14 @@ const getNestedValue = (obj: any, path: string) => {
 };
 
 // --- NEW: AddRoadmapModal Component ---
-const AddRoadmapModal = ({ 
-  isOpen, 
-  onClose, 
+const AddRoadmapModal = ({
+  isOpen,
+  onClose,
   token,
   onRoadmapAdded
-}: { 
-  isOpen: boolean, 
-  onClose: () => void, 
+}: {
+  isOpen: boolean,
+  onClose: () => void,
   token: string | null,
   onRoadmapAdded: () => void
 }) => {
@@ -50,7 +50,7 @@ const AddRoadmapModal = ({
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [divisionId, setDivisionId] = useState('');
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,9 +63,7 @@ const AddRoadmapModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const res = await api.get('/division');
           const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
         } catch (err) {
@@ -86,21 +84,16 @@ const AddRoadmapModal = ({
       setSuccessMessage(null);
       return;
     }
-    
+
     setIsSubmitting(true);
     setError(null);
     setSuccessMessage(null);
 
     try {
-      const res = await axios.post('https://api-my.chevalierlabsas.org/roadmap', {
+      const res = await api.post('/roadmap', {
         title,
         desc,
         divisionId: Number(divisionId),
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        }
       });
 
       const data = res.data;
@@ -117,7 +110,7 @@ const AddRoadmapModal = ({
     } catch (err) {
       setError((err as Error).message);
       setIsSubmitting(false);
-    } 
+    }
   };
 
   const handleClose = () => {
@@ -141,7 +134,7 @@ const AddRoadmapModal = ({
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
-        
+
         {isLoading ? (
           <div className="py-12 text-center text-neutral-600">Loading divisions...</div>
         ) : (
@@ -172,7 +165,7 @@ const AddRoadmapModal = ({
                 ))}
               </select>
             </div>
-            
+
             {error && <p className="text-body-md text-error p-3 bg-error/10 rounded-lg">{error}</p>}
             {successMessage && <p className="text-body-md text-success p-3 bg-success/10 rounded-lg">{successMessage}</p>}
 
@@ -198,15 +191,15 @@ const AddRoadmapModal = ({
 };
 
 // --- NEW: EditRoadmapModal Component ---
-const EditRoadmapModal = ({ 
-  isOpen, 
-  onClose, 
+const EditRoadmapModal = ({
+  isOpen,
+  onClose,
   token,
   onRoadmapUpdated,
   roadmap
-}: { 
-  isOpen: boolean, 
-  onClose: () => void, 
+}: {
+  isOpen: boolean,
+  onClose: () => void,
   token: string | null,
   onRoadmapUpdated: () => void,
   roadmap: Roadmap
@@ -215,7 +208,7 @@ const EditRoadmapModal = ({
   const [title, setTitle] = useState(roadmap.title);
   const [desc, setDesc] = useState(roadmap.desc);
   const [divisionId, setDivisionId] = useState(roadmap.divisionId.toString());
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -228,9 +221,7 @@ const EditRoadmapModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const res = await api.get('/division');
           const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
         } catch (err) {
@@ -242,7 +233,7 @@ const EditRoadmapModal = ({
       fetchDivisions();
     }
   }, [isOpen, token]);
-  
+
   // Update form if the roadmap prop changes
   useEffect(() => {
     if (roadmap) {
@@ -260,21 +251,16 @@ const EditRoadmapModal = ({
       setSuccessMessage(null);
       return;
     }
-    
+
     setIsSubmitting(true);
     setError(null);
     setSuccessMessage(null);
 
     try {
-      const res = await axios.put(`https://api-my.chevalierlabsas.org/roadmap/${roadmap.id}`, {
+      const res = await api.put(`/roadmap/${roadmap.id}`, {
         title,
         desc,
         divisionId: Number(divisionId),
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        }
       });
 
       const data = res.data;
@@ -284,15 +270,15 @@ const EditRoadmapModal = ({
 
       setSuccessMessage('Roadmap updated successfully!');
       onRoadmapUpdated(); // Refresh the table
-      
+
       setTimeout(() => {
         handleClose();
-      }, 1500); 
+      }, 1500);
 
     } catch (err) {
       setError((err as Error).message);
       setIsSubmitting(false);
-    } 
+    }
   };
 
   const handleClose = () => {
@@ -313,7 +299,7 @@ const EditRoadmapModal = ({
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
-        
+
         {isLoading ? (
           <div className="py-12 text-center text-neutral-600">Loading divisions...</div>
         ) : (
@@ -344,7 +330,7 @@ const EditRoadmapModal = ({
                 ))}
               </select>
             </div>
-            
+
             {error && <p className="text-body-md text-error p-3 bg-error/10 rounded-lg">{error}</p>}
             {successMessage && <p className="text-body-md text-success p-3 bg-success/10 rounded-lg">{successMessage}</p>}
 
@@ -391,12 +377,10 @@ const DeleteRoadmapConfirmationModal = ({
     setError(null);
 
     try {
-      const res = await axios.delete(`https://api-my.chevalierlabsas.org/roadmap/${roadmap.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const res = await api.delete(`/roadmap/${roadmap.id}`);
 
       const data = res.data;
-      if (data.status && data.status !== 200) { 
+      if (data.status && data.status !== 200) {
         throw new Error(data.message || 'Failed to delete roadmap');
       }
 
@@ -520,7 +504,7 @@ export default function RoadmapPage() {
   // --- State for Search and Sort ---
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'ascending' });
-  
+
   // --- State for Modals ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -528,7 +512,7 @@ export default function RoadmapPage() {
   const [selectedRoadmap, setSelectedRoadmap] = useState<Roadmap | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
-  
+
   // --- Refactored fetchRoadmaps ---
   const fetchRoadmaps = useCallback(async () => {
     if (!token) {
@@ -536,15 +520,10 @@ export default function RoadmapPage() {
       setIsLoading(false);
       return;
     }
- 
+
     setError(null);
     try {
-      const res = await axios.get('https://api-my.chevalierlabsas.org/roadmap', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const res = await api.get('/roadmap');
 
       const data = res.data;
 
@@ -556,7 +535,7 @@ export default function RoadmapPage() {
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   }, [token]); // Depends on token
 
@@ -569,8 +548,8 @@ export default function RoadmapPage() {
       return;
     }
     setToken(storedToken);
-  const storedRoleId = localStorage.getItem('roleId');
-  if (storedRoleId) setRoleId(parseInt(storedRoleId, 10));
+    const storedRoleId = localStorage.getItem('roleId');
+    if (storedRoleId) setRoleId(parseInt(storedRoleId, 10));
   }, []);
 
   // --- useEffect to fetch data once token is set ---
@@ -602,7 +581,7 @@ export default function RoadmapPage() {
         const aValue = getNestedValue(a, sortConfig.key);
         // @ts-ignore 
         const bValue = getNestedValue(b, sortConfig.key);
-        
+
         let comparison = 0;
 
         if (aValue === null || aValue === undefined) comparison = -1;
@@ -615,7 +594,7 @@ export default function RoadmapPage() {
         } else if (aValue < bValue) {
           comparison = -1;
         }
-        
+
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
     }
@@ -638,7 +617,7 @@ export default function RoadmapPage() {
     if (sortConfig.direction === 'ascending') return <span className="text-primary-800">▲</span>;
     return <span className="text-primary-800">▼</span>;
   };
-  
+
   // --- Handlers to open modals ---
   const handleOpenEditModal = (item: Roadmap) => {
     setSelectedRoadmap(item);
@@ -693,14 +672,14 @@ export default function RoadmapPage() {
           />
         </div>
       </div>
-      
-      {/* Table Container */} 
+
+      {/* Table Container */}
       <div className="overflow-x-auto rounded-lg shadow-md border border-neutral-200">
         <table className="w-full min-w-max text-left">
           {/* Table Header */}
           <thead className="border-b border-primary-200 bg-primary-50">
             <tr className="text-body-sm font-semibold text-primary-800">
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('title')}
               >
@@ -708,7 +687,7 @@ export default function RoadmapPage() {
                   Title {getSortIcon('title')}
                 </div>
               </th>
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('desc')}
               >
@@ -716,21 +695,21 @@ export default function RoadmapPage() {
                   Description {getSortIcon('desc')}
                 </div>
               </th>
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('Division.name')}
               >
-                 <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   Division {getSortIcon('Division.name')}
                 </div>
               </th>
               <th className="p-4">Actions</th>
             </tr>
           </thead>
-          
+
           {/* Table Body: Conditional Rendering */}
           <tbody>
-            {isLoading && (!roadmaps || roadmaps.length === 0)? ( // Show loading only if table is empty
+            {isLoading && (!roadmaps || roadmaps.length === 0) ? ( // Show loading only if table is empty
               // --- Loading State ---
               <tr>
                 <td colSpan={4} className="p-8 text-center text-neutral-600">
@@ -754,8 +733,8 @@ export default function RoadmapPage() {
             ) : (
               // --- Data State ---
               processedRoadmaps.map((item, index) => (
-                <tr 
-                  key={item.id} 
+                <tr
+                  key={item.id}
                   className={`
                     border-b border-neutral-200 text-body-md text-neutral-800
                     ${index % 2 === 0 ? 'bg-white' : 'bg-neutral-50'}
@@ -763,13 +742,13 @@ export default function RoadmapPage() {
                 >
                   {/* Title */}
                   <td className="p-4 font-semibold">{item.title}</td>
-                  
+
                   {/* Description */}
                   <td className="p-4 max-w-sm truncate" title={item.desc}>{item.desc}</td>
-                  
+
                   {/* Division */}
                   <td className="p-4">{item.Division.name}</td>
-                  
+
                   {/* Actions: only show if current user id is not 2 */}
                   <td className="p-4">
                     {roleId !== 2 ? (
@@ -802,7 +781,7 @@ export default function RoadmapPage() {
                         >
                           <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.269 2.943 9.542 7-1.273 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
                         </button>
                       </div>
@@ -815,39 +794,37 @@ export default function RoadmapPage() {
         </table>
       </div>
 
-      {/* --- Render Modals --- */}
-      <AddRoadmapModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      {/* --- Modals --- */}
+      <AddRoadmapModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         token={token}
-        onRoadmapAdded={fetchRoadmaps} 
+        onRoadmapAdded={fetchRoadmaps}
       />
-      
+
       {selectedRoadmap && (
-        <EditRoadmapModal 
-          isOpen={isEditModalOpen} 
-          onClose={() => setIsEditModalOpen(false)} 
-          token={token}
-          onRoadmapUpdated={fetchRoadmaps} 
-          roadmap={selectedRoadmap}
-        />
+        <>
+          <EditRoadmapModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            token={token}
+            onRoadmapUpdated={fetchRoadmaps}
+            roadmap={selectedRoadmap}
+          />
+          <DeleteRoadmapConfirmationModal
+            isOpen={isDeleteModalOpen}
+            onClose={() => setIsDeleteModalOpen(false)}
+            token={token}
+            onRoadmapDeleted={fetchRoadmaps}
+            roadmap={selectedRoadmap}
+          />
+          <ViewRoadmapModal
+            isOpen={isViewModalOpen}
+            onClose={() => setIsViewModalOpen(false)}
+            roadmap={selectedRoadmap}
+          />
+        </>
       )}
-      {selectedRoadmap && (
-        <DeleteRoadmapConfirmationModal 
-          isOpen={isDeleteModalOpen} 
-          onClose={() => setIsDeleteModalOpen(false)} 
-          token={token}
-          onRoadmapDeleted={fetchRoadmaps} 
-          roadmap={selectedRoadmap}
-        />
-      )}
-      {selectedRoadmap && (
-        <ViewRoadmapModal
-          isOpen={isViewModalOpen}
-          onClose={() => setIsViewModalOpen(false)}
-          roadmap={selectedRoadmap}
-        />
-      )} 
     </div>
   );
 }
