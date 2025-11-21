@@ -68,6 +68,7 @@ const AddUserModal = ({
 }) => {
   // Dropdown data state
   const [divisions, setDivisions] = useState<Division[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
 
   // Form input state
   const [name, setName] = useState(''); // Username
@@ -87,16 +88,20 @@ const AddUserModal = ({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Fetch divisions when modal opens
+  // Fetch divisions and roles when modal opens
   useEffect(() => {
     if (isOpen && token) {
-      const fetchDivisions = async () => {
+      const fetchData = async () => {
         setIsLoading(true);
         setError(null);
         try {
-          const res = await api.get('/division');
-          const data = res.data;
-          if (data.status === 200) setDivisions(data.divisions);
+          const [divisionRes, roleRes] = await Promise.all([
+            api.get('/division'),
+            api.get('/role')
+          ]);
+
+          if (divisionRes.data.status === 200) setDivisions(divisionRes.data.divisions);
+          if (roleRes.data.status === 200) setRoles(roleRes.data.roles);
 
         } catch (err) {
           setError((err as Error).message);
@@ -104,7 +109,7 @@ const AddUserModal = ({
           setIsLoading(false);
         }
       };
-      fetchDivisions();
+      fetchData();
     }
   }, [isOpen, token]);
 
@@ -195,7 +200,7 @@ const AddUserModal = ({
         </div>
 
         {isLoading ? (
-          <div className="py-12 text-center text-neutral-600">Loading divisions...</div>
+          <div className="py-12 text-center text-neutral-600">Loading data...</div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Username */}
@@ -270,10 +275,11 @@ const AddUserModal = ({
                   className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-body-md focus:border-primary-500 focus:ring-1 focus:ring-primary-200 outline-none bg-white"
                 >
                   <option value="" disabled>Select role</option>
-                  <option value="1">Mentor</option>
-                  <option value="2">Student</option>
-                  <option value="3">Coordinator</option>
-                  <option value="4">Core</option>
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -370,6 +376,7 @@ const EditUserModal = ({
 }) => {
   // Dropdown data state
   const [divisions, setDivisions] = useState<Division[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
 
   // Form input state - Initialize with user data
   const [name, setName] = useState(user.name); // Username
@@ -391,16 +398,20 @@ const EditUserModal = ({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Fetch divisions when modal opens
+  // Fetch divisions and roles when modal opens
   useEffect(() => {
     if (isOpen && token) {
-      const fetchDivisions = async () => {
+      const fetchData = async () => {
         setIsLoading(true);
         setError(null);
         try {
-          const res = await api.get('/division');
-          const data = res.data;
-          if (data.status === 200) setDivisions(data.divisions);
+          const [divisionRes, roleRes] = await Promise.all([
+            api.get('/division'),
+            api.get('/role')
+          ]);
+
+          if (divisionRes.data.status === 200) setDivisions(divisionRes.data.divisions);
+          if (roleRes.data.status === 200) setRoles(roleRes.data.data);
 
         } catch (err) {
           setError((err as Error).message);
@@ -408,7 +419,7 @@ const EditUserModal = ({
           setIsLoading(false);
         }
       };
-      fetchDivisions();
+      fetchData();
     }
   }, [isOpen, token]);
 
@@ -514,7 +525,7 @@ const EditUserModal = ({
         </div>
 
         {isLoading ? (
-          <div className="py-12 text-center text-neutral-600">Loading divisions...</div>
+          <div className="py-12 text-center text-neutral-600">Loading data...</div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Fields are the same as AddUserModal, but pre-filled */}
@@ -597,10 +608,11 @@ const EditUserModal = ({
                   className={`w-full rounded-lg border px-3 py-2 text-body-md outline-none bg-white ${isReadOnly ? 'bg-neutral-100 text-neutral-600 border-neutral-200 appearance-none' : 'border-neutral-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-200'}`}
                 >
                   <option value="" disabled>Select role</option>
-                  <option value="1">Mentor</option>
-                  <option value="2">Student</option>
-                  <option value="3">Coordinator</option>
-                  <option value="4">Core</option>
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

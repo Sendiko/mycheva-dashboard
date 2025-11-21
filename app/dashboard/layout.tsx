@@ -24,22 +24,20 @@ const getVisibleMenuItems = (roleId: number | null) => {
   if (roleId === null) return []; // No role, show nothing (or maybe just Profile?)
 
   switch (roleId) {
-    case 1: // Mentor
+    case 7: // Mentor
       return allMenuItems.filter(item =>
-        ['attendances', 'roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
+        ['attendances', 'announcements', 'roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
       );
-    case 2: // Student
+    case 8: // Student
       return allMenuItems.filter(item =>
         ['roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
       );
-    case 3: // Coordinator
-      return allMenuItems.filter(item =>
-        ['attendances', 'roadmap', 'discussion', 'meetings', 'users', 'roles', 'profile'].includes(item.id)
-      );
-    case 4: // Core (Admin)
+    case 1: // Core (Admin)
       return allMenuItems; // Show all
     default:
-      return []; // Unknown role
+      return allMenuItems.filter(item =>
+        ['announcements', 'roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
+      ); // Unknown role
   }
 };
 
