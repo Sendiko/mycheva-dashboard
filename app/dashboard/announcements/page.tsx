@@ -637,6 +637,7 @@ export default function AnnouncementsPage() {
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [roleId, setRoleId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [fullScreenImageUrl, setFullScreenImageUrl] = useState<string | null>(null);
 
@@ -649,6 +650,8 @@ export default function AnnouncementsPage() {
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUserId = localStorage.getItem('userId');
+    const storedRoleId = localStorage.getItem('roleId');
+    setRoleId(storedRoleId);
 
     if (!storedToken || !storedUserId) {
       setError('You are not authenticated.');
@@ -711,15 +714,17 @@ export default function AnnouncementsPage() {
       {/* --- NEW: Header with Add New Button --- */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-4xl text-neutral-900">Announcements</h1>
-        <button
-          className="flex items-center space-x-2 rounded-lg bg-primary-500 py-2 px-4 text-white font-semibold text-body-md shadow-sm hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
-          onClick={() => setIsModalOpen(true)} // <-- Hook up the modal
-        >
-          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          <span>Add New</span>
-        </button>
+        {roleId !== '2' && (
+          <button
+            className="flex items-center space-x-2 rounded-lg bg-primary-500 py-2 px-4 text-white font-semibold text-body-md shadow-sm hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+            onClick={() => setIsModalOpen(true)} // <-- Hook up the modal
+          >
+            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span>Add New</span>
+          </button>
+        )}
       </div>
 
 

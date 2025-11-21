@@ -56,6 +56,14 @@ export default function Home() {
                 Login
               </Link>
             </div>
+            <div className="flex md:hidden items-center">
+              <Link
+                href="/login"
+                className="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white px-4 py-2 rounded-lg transition-colors font-medium"
+              >
+                Login
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
