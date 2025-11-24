@@ -21,6 +21,7 @@ type Reply = {
   forumId: number;
   content: string;
   createdAt: string;
+  updatedAt: string;
   user: User;
 };
 
@@ -29,8 +30,9 @@ type Forum = {
   userId: number;
   content: string;
   createdAt: string;
+  updatedAt: string;
   user: User;
-  Replies: Reply[]; // We still need this for the reply count
+  Replies: Reply[];
 };
 
 // --- Helper function to format timestamp ---
@@ -38,7 +40,6 @@ const formatTimestamp = (dateString: string) => {
   if (!dateString) return 'N/A';
   try {
     const date = new Date(dateString);
-    // Formats to "Oct 27, 2025, 6:40 AM"
     return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -53,7 +54,7 @@ const formatTimestamp = (dateString: string) => {
   }
 };
 
-// --- Forum Card Component (Simplified for Feed) ---
+// --- Forum Card Component ---
 const ForumCard = ({
   post,
   currentUserId,
@@ -104,7 +105,12 @@ const ForumCard = ({
               </div>
             )}
           </div>
-          <span className="text-body-md text-neutral-500">{formatTimestamp(post.createdAt)}</span>
+          <span className="text-body-md text-neutral-500">
+            {formatTimestamp(post.createdAt)}
+            {post.updatedAt && post.createdAt !== post.updatedAt && (
+              <span className="ml-1 text-neutral-400 italic">(edited)</span>
+            )}
+          </span>
 
           <Link href={`/dashboard/forums/${post.id}`} className="block mt-2">
             <p className="text-body-md text-neutral-800 whitespace-pre-line">
@@ -127,7 +133,7 @@ const ForumCard = ({
   );
 };
 
-// --- Create Post Form (Top of Page) ---
+// --- Create Post Form ---
 const CreatePostForm = ({
   token,
   userId,
@@ -165,7 +171,7 @@ const CreatePostForm = ({
       }
 
       setContent('');
-      onPostAdded(); // Refresh the list
+      onPostAdded();
 
     } catch (err) {
       setError((err as Error).message);
@@ -211,8 +217,7 @@ const CreatePostForm = ({
   );
 };
 
-// --- Modals for Editing/Deleting Forum Posts ---
-// (These are the same as before, just moved here)
+// --- Modals ---
 const EditForumModal = ({
   isOpen, onClose, token, onPostUpdated, post
 }: {
@@ -309,24 +314,21 @@ const DeleteForumModal = ({
   );
 };
 
-// --- Main Discussion Page Component ---
+// --- Main Page Component ---
 export default function DiscussionPage() {
   const [forums, setForums] = useState<Forum[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Get user info from localStorage
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [userProfileUrl, setUserProfileUrl] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
 
-  // State for modals
   const [selectedForum, setSelectedForum] = useState<Forum | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // Get token and user info on mount
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUserId = localStorage.getItem('userId');
@@ -344,18 +346,14 @@ export default function DiscussionPage() {
     setUserName(storedName);
   }, []);
 
-  // --- Fetch all forums ---
   const fetchForums = useCallback(async () => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     setError(null);
     try {
       const response = await api.get('/forum');
       const data = response.data;
       if (data.status === 200 && Array.isArray(data.forums)) {
-        // Sort forums to show newest first
         setForums(data.forums.sort((a: Forum, b: Forum) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
       } else {
         throw new Error(data.message || 'Failed to parse forums');
@@ -367,14 +365,12 @@ export default function DiscussionPage() {
     }
   }, [token]);
 
-  // Fetch data once token is set
   useEffect(() => {
     if (token) {
       fetchForums();
     }
   }, [token, fetchForums]);
 
-  // --- Modal Handlers for FORUMS ---
   const handleOpenForumEdit = (post: Forum) => {
     setSelectedForum(post);
     setIsEditModalOpen(true);
@@ -389,7 +385,6 @@ export default function DiscussionPage() {
       <h1 className="text-4xl text-neutral-900 mb-6">Discussion Forum</h1>
 
       <div className="max-w-3xl mx-auto">
-        {/* --- Create Post Form --- */}
         <CreatePostForm
           token={token}
           userId={userId}
@@ -398,7 +393,6 @@ export default function DiscussionPage() {
           onPostAdded={fetchForums}
         />
 
-        {/* --- Forum Feed --- */}
         {isLoading ? (
           <div className="text-center text-neutral-600 py-12">Loading discussions...</div>
         ) : error ? (
@@ -418,7 +412,6 @@ export default function DiscussionPage() {
         )}
       </div>
 
-      {/* --- Modals --- */}
       {selectedForum && (
         <EditForumModal
           isOpen={isEditModalOpen}

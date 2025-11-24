@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import api from '@/lib/axios';
 
-// --- Types (Copied from main discussion page) ---
+// --- Types ---
 type User = {
   id: number;
   name: string;
@@ -22,6 +22,7 @@ type Reply = {
   forumId: number;
   content: string;
   createdAt: string;
+  updatedAt: string;
   user: User;
 };
 
@@ -30,6 +31,7 @@ type Forum = {
   userId: number;
   content: string;
   createdAt: string;
+  updatedAt: string;
   user: User;
   Replies: Reply[];
 };
@@ -39,7 +41,6 @@ const formatTimestamp = (dateString: string) => {
   if (!dateString) return 'N/A';
   try {
     const date = new Date(dateString);
-    // Formats to "Oct 27, 2025, 6:40 AM"
     return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -90,7 +91,12 @@ const ReplyCard = ({
             <span className="font-semibold text-body-md text-neutral-900">{reply.user.name}</span>
             <span className="text-body-sm text-neutral-500">@{reply.user.name}</span>
             <span className="text-body-sm text-neutral-500">·</span>
-            <span className="text-body-sm text-neutral-500">{formatTimestamp(reply.createdAt)}</span>
+            <span className="text-body-sm text-neutral-500">
+              {formatTimestamp(reply.createdAt)}
+              {reply.updatedAt && reply.createdAt !== reply.updatedAt && (
+                <span className="ml-1 text-neutral-400 italic">(edited)</span>
+              )}
+            </span>
           </div>
           {/* Edit/Delete for Replies */}
           {canEdit && (
@@ -196,7 +202,12 @@ const MainPostCard = ({ post }: { post: Forum }) => {
             <span className="font-semibold text-body-lg text-neutral-900">{post.user.name}</span>
             <span className="text-body-md text-neutral-500">@{post.user.name}</span>
           </div>
-          <span className="text-body-md text-neutral-500">{formatTimestamp(post.createdAt)}</span>
+          <span className="text-body-md text-neutral-500">
+            {formatTimestamp(post.createdAt)}
+            {post.updatedAt && post.createdAt !== post.updatedAt && (
+              <span className="ml-1 text-neutral-400 italic">(edited)</span>
+            )}
+          </span>
         </div>
       </div>
       {/* Card Body */}
@@ -216,7 +227,7 @@ const MainPostCard = ({ post }: { post: Forum }) => {
 };
 
 
-// --- NEW: Modal for Editing Reply ---
+// --- Modal for Editing Reply ---
 const EditReplyModal = ({
   isOpen, onClose, token, onPostUpdated, reply
 }: {
@@ -272,7 +283,7 @@ const EditReplyModal = ({
   );
 };
 
-// --- NEW: Modal for Deleting Reply ---
+// --- Modal for Deleting Reply ---
 const DeleteReplyModal = ({
   isOpen, onClose, token, onPostUpdated, reply
 }: {
@@ -323,16 +334,13 @@ export default function ForumDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Get user info from localStorage
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
 
-  // State for modals
   const [selectedReply, setSelectedReply] = useState<Reply | null>(null);
   const [isReplyEditModalOpen, setIsReplyEditModalOpen] = useState(false);
   const [isReplyDeleteModalOpen, setIsReplyDeleteModalOpen] = useState(false);
 
-  // Get token and user info on mount
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUserId = localStorage.getItem('userId');
@@ -346,7 +354,6 @@ export default function ForumDetailPage() {
     setUserId(Number(storedUserId));
   }, []);
 
-  // --- Fetch the specific forum post ---
   const fetchForumDetails = useCallback(async () => {
     if (!token || !forumId) {
       return;
@@ -369,14 +376,12 @@ export default function ForumDetailPage() {
     }
   }, [token, forumId]);
 
-  // Fetch data once token/forumId is set
   useEffect(() => {
     if (token && forumId) {
       fetchForumDetails();
     }
   }, [token, forumId, fetchForumDetails]);
 
-  // --- Modal Handlers for REPLIES ---
   const handleOpenReplyEdit = (reply: Reply) => {
     setSelectedReply(reply);
     setIsReplyEditModalOpen(true);
@@ -439,7 +444,7 @@ export default function ForumDetailPage() {
         </>
       )}
 
-      {/* --- NEW: Render Reply Modals --- */}
+      {/* --- Render Reply Modals --- */}
       {selectedReply && (
         <EditReplyModal
           isOpen={isReplyEditModalOpen}
