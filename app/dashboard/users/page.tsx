@@ -411,7 +411,7 @@ const EditUserModal = ({
           ]);
 
           if (divisionRes.data.status === 200) setDivisions(divisionRes.data.divisions);
-          if (roleRes.data.status === 200) setRoles(roleRes.data.data);
+          if (roleRes.data.status === 200) setRoles(roleRes.data.roles);
 
         } catch (err) {
           setError((err as Error).message);
@@ -979,7 +979,7 @@ export default function UserManagementPage() {
           {/* --- MODIFIED: Table Header --- */}
           <thead className="border-b border-primary-200 bg-primary-50">
             <tr className="text-body-sm font-semibold text-primary-800">
-              {/* <th className="p-4">#</th> */} {/* Removed # */}
+
               <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('UserDatum.fullName')}
