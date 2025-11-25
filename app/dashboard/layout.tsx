@@ -26,7 +26,7 @@ const getVisibleMenuItems = (roleId: number | null) => {
   switch (roleId) {
     case 7: // Mentor
       return allMenuItems.filter(item =>
-        ['attendances', 'announcements', 'roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
+        ['attendances', 'announcements', 'roadmap', 'discussion', 'meetings', 'profile', 'users'].includes(item.id)
       );
     case 8: // Student
       return allMenuItems.filter(item =>
