@@ -820,7 +820,16 @@ export default function UserManagementPage() {
     // setIsLoading(true); 
     setError(null);
     try {
-      const res = await api.get('/user/all?detailed=true');
+      // Get roleId from localStorage
+      const storedRoleId = localStorage.getItem('roleId');
+
+      // Build query string
+      let queryString = 'detailed=true';
+      if (storedRoleId === '7') {
+        queryString += '&students=true';
+      }
+
+      const res = await api.get(`/user/all?${queryString}`);
 
       const data = res.data;
 
