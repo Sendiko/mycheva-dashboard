@@ -31,7 +31,7 @@ const getVisibleMenuItems = (roleId: number | null) => {
       );
     case 8: // Student
       return allMenuItems.filter(item =>
-        ['roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
+        ['discussion', 'meetings', 'profile'].includes(item.id)
       );
     case 1: // Core (Admin)
       return allMenuItems; // Show all (now includes divisions)
