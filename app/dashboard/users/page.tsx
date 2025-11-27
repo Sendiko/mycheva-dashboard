@@ -100,8 +100,8 @@ const AddUserModal = ({
             api.get('/role')
           ]);
 
-          if (divisionRes.data.status === 200) setDivisions(divisionRes.data.divisions);
-          if (roleRes.data.status === 200) setRoles(roleRes.data.roles);
+          console.log('DEBUG_DIV', divisionRes.data); if (divisionRes.data.status === 200) setDivisions(divisionRes.data.divisions);
+          console.log('DEBUG_ROLE', roleRes.data); if (roleRes.data.status === 200) setRoles(roleRes.data.roles);
 
         } catch (err) {
           setError((err as Error).message);
@@ -604,7 +604,6 @@ const EditUserModal = ({
                 </label>
                 <select
                   id="edit-user-role" value={roleId} onChange={(e) => setRoleId(e.target.value)}
-                  disabled={user.roleId != 2}
                   className={`w-full rounded-lg border px-3 py-2 text-body-md outline-none bg-white ${isReadOnly ? 'bg-neutral-100 text-neutral-600 border-neutral-200 appearance-none' : 'border-neutral-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-200'}`}
                 >
                   <option value="" disabled>Select role</option>

@@ -16,6 +16,7 @@ const allMenuItems = [
   { id: 'meetings', name: 'Meetings', href: '/dashboard/meetings', icon: '🤝' },
   { id: 'users', name: 'User Management', href: '/dashboard/users', icon: '👥' },
   { id: 'roles', name: 'Roles', href: '/dashboard/roles', icon: '🛡️' },
+  { id: 'divisions', name: 'Divisions', href: '/dashboard/divisions', icon: '🏢' },
   { id: 'profile', name: 'Profile', href: '/dashboard/profile', icon: '👤' },
 ];
 
@@ -33,7 +34,7 @@ const getVisibleMenuItems = (roleId: number | null) => {
         ['roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
       );
     case 1: // Core (Admin)
-      return allMenuItems; // Show all
+      return allMenuItems; // Show all (now includes divisions)
     default:
       return allMenuItems.filter(item =>
         ['announcements', 'roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
