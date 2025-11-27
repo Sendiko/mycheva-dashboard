@@ -789,6 +789,7 @@ export default function RoadmapPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedRoadmap, setSelectedRoadmap] = useState<Roadmap | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [showJourneyView, setShowJourneyView] = useState(false); // NEW: Toggle for Journey View
 
 
   // --- Refactored fetchRoadmaps ---
@@ -947,6 +948,28 @@ export default function RoadmapPage() {
         </h1>
         {roleId !== 2 && roleId !== 8 && (
           <div className="flex gap-3">
+            {/* Journey View Toggle */}
+            <button
+              onClick={() => setShowJourneyView(!showJourneyView)}
+              className="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white py-2 px-4 font-semibold text-body-md text-neutral-700 hover:bg-neutral-50 transition-all shadow-sm"
+            >
+              {showJourneyView ? (
+                <>
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  Table View
+                </>
+              ) : (
+                <>
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  Journey View
+                </>
+              )}
+            </button>
+
             {/* Import CSV Button */}
             <button
               onClick={() => setIsImportModalOpen(true)}
@@ -988,7 +1011,7 @@ export default function RoadmapPage() {
         </div>
       </div>
 
-      {roleId === 8 ? (
+      {roleId === 8 || showJourneyView ? (
         <JourneyView roadmaps={processedRoadmaps} />
       ) : (
         /* Table Container */
