@@ -1092,7 +1092,7 @@ export default function MeetingsPage() {
         <h1 className="text-4xl text-neutral-900">
           Meetings
         </h1>
-        {roleId !== 2 && (
+        {roleId === 7 && (
           <button
             className="flex items-center space-x-2 rounded-lg bg-primary-500 py-2 px-4 text-white font-semibold text-body-md shadow-sm hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
             onClick={() => setIsModalOpen(true)}
