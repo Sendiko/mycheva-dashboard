@@ -1258,10 +1258,7 @@ export default function UserManagementPage() {
       {/* --- Header & Actions --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-h3 text-neutral-900">User Management</h1>
-          <p className="text-body-md text-neutral-500 mt-1">
-            Manage users, roles, and permissions.
-          </p>
+          <h1 className="text-4xl text-neutral-900">User Management</h1>
         </div>
         <div className="flex gap-3">
           {/* Import CSV Button */}

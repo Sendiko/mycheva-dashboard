@@ -942,7 +942,7 @@ export default function RoadmapPage() {
   return (
     <div>
       {/* --- Top Bar: Header and Add Button --- */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <h1 className="text-4xl text-neutral-900">
           Roadmap
         </h1>
