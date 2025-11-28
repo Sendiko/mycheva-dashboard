@@ -1314,6 +1314,7 @@ export default function UserManagementPage() {
               {/* --- MODIFIED: Table Header --- */}
               <thead className="border-b border-primary-200 bg-primary-50">
                 <tr className="text-body-sm font-semibold text-primary-800">
+                  <th className="p-4 w-16">No</th>
 
                   <th
                     className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
@@ -1356,19 +1357,19 @@ export default function UserManagementPage() {
               <tbody>
                 {isLoading && (!users || users.length === 0) ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-neutral-600"> {/* Adjusted colSpan */}
+                    <td colSpan={6} className="p-8 text-center text-neutral-600"> {/* Adjusted colSpan */}
                       Loading user data...
                     </td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-error"> {/* Adjusted colSpan */}
+                    <td colSpan={6} className="p-8 text-center text-error"> {/* Adjusted colSpan */}
                       Error: {error}
                     </td>
                   </tr>
                 ) : processedUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-neutral-600"> {/* Adjusted colSpan */}
+                    <td colSpan={6} className="p-8 text-center text-neutral-600"> {/* Adjusted colSpan */}
                       {searchTerm ? 'No users found matching your search.' : 'No users found.'}
                     </td>
                   </tr>
@@ -1381,6 +1382,9 @@ export default function UserManagementPage() {
                       onClick={() => handleOpenViewModal(user)} // <-- Open view modal on row click
                     >
                       {/* --- MODIFIED: Table Cells --- */}
+                      {/* Numbering */}
+                      <td className="p-4">{index + 1}</td>
+
                       {/* Name (with Profile Pic) */}
                       <td className="p-4">
                         <div className="flex items-center space-x-3">
