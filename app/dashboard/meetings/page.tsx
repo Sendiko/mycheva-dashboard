@@ -1084,7 +1084,6 @@ export default function MeetingsPage() {
     setIsQrModalOpen(true);
   };
 
-  console.log(roleId === 7 || roleId === 1);
   return (
     <div>
       {/* --- Top Bar: Header and Add Button --- */}

@@ -75,7 +75,9 @@ const EditProfileModal = ({
   const [major, setMajor] = useState(user.UserDatum.major);
   const [roleId, setRoleId] = useState(user.roleId.toString());
   const [divisionId, setDivisionId] = useState(user.UserDatum.divisionId.toString());
-  // Password fields are optional for edit, leave blank unless changing
+
+  // Password fields
+  const [oldPassword, setOldPassword] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
 
@@ -122,8 +124,12 @@ const EditProfileModal = ({
       setMajor(user.UserDatum.major);
       setRoleId(user.roleId.toString());
       setDivisionId(user.UserDatum.divisionId.toString());
-      setPassword(''); // Reset password fields on open
+
+      // Reset password fields
+      setOldPassword('');
+      setPassword('');
       setPasswordConfirmation('');
+
       // Reset photo selection when modal opens/changes
       setSelectedFile(null);
       setPreviewUrl(null);
@@ -137,19 +143,27 @@ const EditProfileModal = ({
     setError(null);
     setSuccessMessage(null);
 
-    // Basic Validation (Password optional, but if entered must match)
+    // Basic Validation
     if (!name || !fullName || !nim || !email || !faculty || !major || !roleId || !divisionId) {
       setError('All fields except password are required.');
       return;
     }
-    if (password && password !== passwordConfirmation) {
-      setError('Passwords do not match.');
-      return;
+
+    // Password validation
+    if (password) {
+      if (!oldPassword) {
+        setError('Current password is required to set a new password.');
+        return;
+      }
+      if (password !== passwordConfirmation) {
+        setError('New passwords do not match.');
+        return;
+      }
     }
 
     setIsSubmitting(true);
 
-    // Construct body - include password only if provided
+    // Construct body - EXCLUDE password from general update
     const body: any = {
       name,
       fullName,
@@ -160,23 +174,37 @@ const EditProfileModal = ({
       roleId: Number(roleId),
       divisionId: Number(divisionId),
     };
-    if (password) {
-      body.password = password;
-      body.password_confirmation = passwordConfirmation;
-    }
-
 
     try {
-      // API: PUT to /user/:id
-      const res = await api.put(`/user/${user.id}`, body);
+      // 1. Update Profile Data
+      const profileRes = await api.put(`/user/${user.id}`, body);
+      const profileData = profileRes.data;
 
-      const data = res.data;
-      if (data.status !== 200) {
-        throw new Error(data.message || 'Failed to update user');
+      if (profileData.status !== 200) {
+        throw new Error(profileData.message || 'Failed to update user profile');
+      }
+
+      let message = 'Profile updated successfully!';
+
+      // 2. Update Password (if provided) - Separate Endpoint
+      if (password) {
+        const passwordBody = {
+          oldPassword: oldPassword,
+          password: password
+        };
+
+        const passwordRes = await api.post(`/change_password/${user.id}`, passwordBody);
+        const passwordData = passwordRes.data;
+
+        if (passwordData.status !== 200) {
+          // If profile updated but password failed, we should let the user know
+          throw new Error(`Profile updated, but password change failed: ${passwordData.message}`);
+        }
+        message = 'Profile and password updated successfully!';
       }
 
       // Success
-      setSuccessMessage('Profile updated successfully!');
+      setSuccessMessage(message);
       onProfileUpdated(); // Refresh the profile data
 
       setTimeout(() => {
@@ -185,6 +213,7 @@ const EditProfileModal = ({
 
     } catch (err) {
       setError((err as Error).message);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -394,26 +423,41 @@ const EditProfileModal = ({
                 </div>
               </div>
               {/* Password & Confirmation (Optional) */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="edit-user-password" className="block text-body-md font-semibold text-neutral-800 mb-1">
-                    New Password (Optional)
-                  </label>
-                  <input
-                    id="edit-user-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Leave blank to keep current"
-                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-body-md focus:border-primary-500 focus:ring-1 focus:ring-primary-200 outline-none"
-                  />
+              <div className="space-y-4 border-t border-neutral-200 pt-4 mt-4">
+                <h3 className="text-body-lg font-semibold text-neutral-900">Change Password</h3>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label htmlFor="edit-user-old-password" className="block text-body-md font-semibold text-neutral-800 mb-1">
+                      Current Password
+                    </label>
+                    <input
+                      id="edit-user-old-password" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)}
+                      placeholder="Required if changing password"
+                      className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-body-md focus:border-primary-500 focus:ring-1 focus:ring-primary-200 outline-none"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="edit-user-password-confirm" className="block text-body-md font-semibold text-neutral-800 mb-1">
-                    Confirm New Password
-                  </label>
-                  <input
-                    id="edit-user-password-confirm" type="password" value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)}
-                    placeholder="Required if changing password"
-                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-body-md focus:border-primary-500 focus:ring-1 focus:ring-primary-200 outline-none"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="edit-user-password" className="block text-body-md font-semibold text-neutral-800 mb-1">
+                      New Password
+                    </label>
+                    <input
+                      id="edit-user-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Leave blank to keep current"
+                      className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-body-md focus:border-primary-500 focus:ring-1 focus:ring-primary-200 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit-user-password-confirm" className="block text-body-md font-semibold text-neutral-800 mb-1">
+                      Confirm New Password
+                    </label>
+                    <input
+                      id="edit-user-password-confirm" type="password" value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)}
+                      placeholder="Required if changing password"
+                      className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-body-md focus:border-primary-500 focus:ring-1 focus:ring-primary-200 outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
