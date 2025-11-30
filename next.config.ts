@@ -27,6 +27,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**', // Allows all paths from this domain
       },
+      {
+        protocol: 'https',
+        hostname: 'dev-api-my.chevalierlabsas.org',
+        port: '',
+        pathname: '/**', // Allows all paths from this domain
+      },
     ],
   },
 };
