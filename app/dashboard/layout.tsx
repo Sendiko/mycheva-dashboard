@@ -17,6 +17,7 @@ const allMenuItems = [
   { id: 'users', name: 'User Management', href: '/dashboard/users', icon: '👥' },
   { id: 'roles', name: 'Roles', href: '/dashboard/roles', icon: '🛡️' },
   { id: 'divisions', name: 'Divisions', href: '/dashboard/divisions', icon: '🏢' },
+  { id: 'app-versions', name: 'App Versions', href: '/dashboard/app-versions', icon: '📱' },
   { id: 'profile', name: 'Profile', href: '/dashboard/profile', icon: '👤' },
 ];
 
