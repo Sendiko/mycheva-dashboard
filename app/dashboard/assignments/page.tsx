@@ -867,7 +867,7 @@ export default function AssignmentsPage() {
           <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">Assignments</h1>
           <p className="text-neutral-500 mt-1">Manage and track your division&apos;s tasks</p>
         </div>
-        {roleId === 7 && (
+        {roleId === 7 || roleId === 1 ? (
           <button
             onClick={handleCreateClick}
             className="flex items-center space-x-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-primary-700 transition-all shadow-sm hover:shadow-md active:scale-95"
@@ -875,7 +875,7 @@ export default function AssignmentsPage() {
             <span className="text-xl leading-none">+</span>
             <span>Create Assignment</span>
           </button>
-        )}
+        ) : null}
       </div>
 
       {isLoading ? (
