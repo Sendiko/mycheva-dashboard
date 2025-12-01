@@ -65,7 +65,7 @@ const AssignmentCard = ({
 }) => {
   const deadlineDate = new Date(assignment.deadline);
   const isPastDeadline = new Date() > deadlineDate;
-  const isMentor = roleId === 7;
+  const isMentor = roleId === 7 || roleId === 1;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow duration-200 group">
