@@ -1,3 +1,4 @@
+import typography from '@tailwindcss/typography';
 
 export default {
   content: [
@@ -64,5 +65,7 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    typography,
+  ],
 };

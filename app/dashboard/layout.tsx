@@ -14,6 +14,7 @@ const allMenuItems = [
   { id: 'roadmap', name: 'Roadmap', href: '/dashboard/roadmap', icon: '🗺️' },
   { id: 'discussion', name: 'Discussion Forum', href: '/dashboard/forums', icon: '💬' },
   { id: 'meetings', name: 'Meetings', href: '/dashboard/meetings', icon: '🤝' },
+  { id: 'assignments', name: 'Assignments', href: '/dashboard/assignments', icon: '📝' }, // Added Assignments
   { id: 'users', name: 'User Management', href: '/dashboard/users', icon: '👥' },
   { id: 'roles', name: 'Roles', href: '/dashboard/roles', icon: '🛡️' },
   { id: 'divisions', name: 'Divisions', href: '/dashboard/divisions', icon: '🏢' },
@@ -28,11 +29,11 @@ const getVisibleMenuItems = (roleId: number | null) => {
   switch (roleId) {
     case 7: // Mentor
       return allMenuItems.filter(item =>
-        ['attendances', 'announcements', 'roadmap', 'discussion', 'meetings', 'profile', 'users'].includes(item.id)
+        ['attendances', 'announcements', 'roadmap', 'discussion', 'meetings', 'assignments', 'profile', 'users'].includes(item.id)
       );
     case 8: // Student
       return allMenuItems.filter(item =>
-        ['roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
+        ['roadmap', 'discussion', 'meetings', 'assignments', 'profile'].includes(item.id)
       );
     case 1: // Core (Admin)
       return allMenuItems; // Show all (now includes divisions)
