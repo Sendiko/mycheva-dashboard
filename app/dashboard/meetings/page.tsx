@@ -922,8 +922,8 @@ const ViewMeetingModal = ({
       </div>
     </div>
   );
-};
 
+};
 
 export default function MeetingsPage() {
   // --- State for data, loading, and errors ---
@@ -932,6 +932,8 @@ export default function MeetingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [roleId, setRoleId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [userDivisionId, setUserDivisionId] = useState<number | null>(null);
 
   // --- State for Search and Sort ---
   const [searchTerm, setSearchTerm] = useState('');
@@ -975,6 +977,21 @@ export default function MeetingsPage() {
     }
   }, [token]); // Depends on token
 
+  // --- NEW: Fetch User Division ---
+  const fetchUserDivision = useCallback(async () => {
+    if (!token || !userId) return;
+
+    try {
+      const res = await api.get(`/userdata/${userId}`);
+      const data = res.data;
+      if (data.status === 200 && data.user && data.user.UserDatum) {
+        setUserDivisionId(data.user.UserDatum.divisionId);
+      }
+    } catch (err) {
+      console.error("Failed to fetch user division:", err);
+    }
+  }, [token, userId]);
+
   // --- useEffect to get token and initial data ---
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -986,19 +1003,29 @@ export default function MeetingsPage() {
     setToken(storedToken);
     const storedRoleId = localStorage.getItem('roleId');
     if (storedRoleId) setRoleId(parseInt(storedRoleId, 10));
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) setUserId(parseInt(storedUserId, 10));
   }, []);
 
   // --- useEffect to fetch data once token is set ---
   useEffect(() => {
     if (token) {
       fetchMeetings();
+      if (userId) {
+        fetchUserDivision();
+      }
     }
-  }, [token, fetchMeetings]);
+  }, [token, userId, fetchMeetings, fetchUserDivision]);
 
 
   // --- useMemo to process data for search and sort ---
   const processedMeetings = useMemo(() => {
     let filteredData = [...meetings];
+
+    // NEW: Filter by Division for Mentors (7) and Students (8)
+    if ((roleId === 7 || roleId === 8) && userDivisionId) {
+      filteredData = filteredData.filter(item => item.divisionId === userDivisionId);
+    }
 
     // 1. Filter data based on search term
     if (searchTerm) {

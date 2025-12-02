@@ -80,12 +80,14 @@ type User = {
   name: string;
   UserDatum: {
     fullName: string;
+    divisionId: number;
   };
 };
 
 type Event = {
   id: number;
   name: string;
+  divisionId: number;
 };
 
 // --- Define types for sorting ---
@@ -122,6 +124,7 @@ const AddAttendanceModal = ({
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedEventId, setSelectedEventId] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [userSearch, setUserSearch] = useState(''); // New state for user search
 
   // UI state
   const [isLoading, setIsLoading] = useState(false);
@@ -139,7 +142,7 @@ const AddAttendanceModal = ({
         setError(null);
         try {
           // Fetch Users
-          const userRes = await api.get('/user/all');
+          const userRes = await api.get('/user/all?students=true&detailed=true');
           const userData = userRes.data;
           if (userData.status === 200) setUsers(userData.users);
 
@@ -157,6 +160,29 @@ const AddAttendanceModal = ({
       fetchDropdownData();
     }
   }, [isOpen, token]);
+
+  // Filter users based on selected event and search term
+  const filteredUsers = useMemo(() => {
+    let filtered = users;
+
+    // Filter by Division if an event is selected
+    if (selectedEventId) {
+      const selectedEvent = events.find(e => e.id === Number(selectedEventId));
+      if (selectedEvent) {
+        filtered = filtered.filter(user => user.UserDatum?.divisionId === selectedEvent.divisionId);
+      }
+    }
+
+    // Filter by Search Term
+    if (userSearch) {
+      const lowerSearch = userSearch.toLowerCase();
+      filtered = filtered.filter(user =>
+        (user.UserDatum?.fullName || user.name).toLowerCase().includes(lowerSearch)
+      );
+    }
+
+    return filtered;
+  }, [users, selectedEventId, events, userSearch]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -201,6 +227,7 @@ const AddAttendanceModal = ({
     setSelectedUserId('');
     setSelectedEventId('');
     setSelectedStatus('');
+    setUserSearch('');
     setError(null);
     setSuccessMessage(null);
     setIsSubmitting(false);
@@ -228,27 +255,8 @@ const AddAttendanceModal = ({
           <div className="py-12 text-center text-neutral-600">Loading form data...</div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* User Dropdown */}
-            <div>
-              <label htmlFor="user" className="block text-body-md font-semibold text-neutral-800 mb-2">
-                User
-              </label>
-              <select
-                id="user"
-                value={selectedUserId}
-                onChange={(e) => setSelectedUserId(e.target.value)}
-                className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
-              >
-                <option value="" disabled>Select a user</option>
-                {users.map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.UserDatum?.fullName || user.name}
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            {/* Event Dropdown */}
+            {/* Event Dropdown (Moved to Top) */}
             <div>
               <label htmlFor="event" className="block text-body-md font-semibold text-neutral-800 mb-2">
                 Event
@@ -256,7 +264,10 @@ const AddAttendanceModal = ({
               <select
                 id="event"
                 value={selectedEventId}
-                onChange={(e) => setSelectedEventId(e.target.value)}
+                onChange={(e) => {
+                  setSelectedEventId(e.target.value);
+                  setSelectedUserId(''); // Reset user selection when event changes
+                }}
                 className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
               >
                 <option value="" disabled>Select an event</option>
@@ -264,6 +275,42 @@ const AddAttendanceModal = ({
                   <option key={event.id} value={event.id}>{event.name}</option>
                 ))}
               </select>
+            </div>
+
+            {/* User Dropdown with Search */}
+            <div>
+              <label htmlFor="user" className="block text-body-md font-semibold text-neutral-800 mb-2">
+                User
+              </label>
+
+              {/* Search Input */}
+              <input
+                type="text"
+                placeholder="Search user..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="w-full mb-2 rounded-lg border border-neutral-300 px-3 py-2 text-body-sm text-neutral-800 placeholder-neutral-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-200 outline-none transition-all"
+              />
+
+              <select
+                id="user"
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+              >
+                <option value="" disabled>Select a user</option>
+                {filteredUsers.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {user.UserDatum?.fullName || user.name}
+                  </option>
+                ))}
+                {filteredUsers.length === 0 && (
+                  <option disabled>No users found</option>
+                )}
+              </select>
+              {selectedEventId && filteredUsers.length === 0 && (
+                <p className="text-xs text-neutral-500 mt-1">No users found for this event's division.</p>
+              )}
             </div>
 
             {/* Status Dropdown */}
@@ -291,7 +338,7 @@ const AddAttendanceModal = ({
               </p>
             )}
             {successMessage && (
-              <p className="text-body-md text-success p-3 bg-success/1  0 rounded-lg">
+              <p className="text-body-md text-success p-3 bg-success/10 rounded-lg">
                 {successMessage}
               </p>
             )}
