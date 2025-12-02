@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import api from '@/lib/axios';
 import Image from 'next/image';
+import Pagination from '@/components/Pagination';
 
 // --- Define a type for the detailed user data ---
 type User = {
@@ -1115,9 +1116,14 @@ export default function UserManagementPage() {
   const [deletingUser, setDeletingUser] = useState<User | null>(null); // For delete modal
   const [isReadOnlyModal, setIsReadOnlyModal] = useState(false); // To differentiate edit from view
 
+  // --- Pagination State ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [limit] = useState(10);
+
 
   // --- Refactored fetchUsers ---
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (page = 1) => {
     if (!token) {
       setError('You are not authenticated.');
       setIsLoading(false);
@@ -1125,14 +1131,14 @@ export default function UserManagementPage() {
     }
 
     // Don't show loading on refresh
-    // setIsLoading(true); 
+    // setIsLoading(true);
     setError(null);
     try {
       // Get roleId from localStorage
       const storedRoleId = localStorage.getItem('roleId');
 
       // Build query string
-      let queryString = 'detailed=true';
+      let queryString = `detailed=true&page=${page}&limit=${limit}`;
       if (storedRoleId === '7') {
         queryString += '&students=true';
       }
@@ -1143,6 +1149,8 @@ export default function UserManagementPage() {
 
       if (data.status === 200 && Array.isArray(data.users)) {
         setUsers(data.users);
+        setTotalPages(data.meta?.totalPages || 1);
+        setCurrentPage(page);
       } else {
         throw new Error(data.message || 'Failed to parse user data');
       }
@@ -1151,7 +1159,7 @@ export default function UserManagementPage() {
     } finally {
       setIsLoading(false); // Only set loading false on initial load or error
     }
-  }, [token]); // Depends on token
+  }, [token, limit]); // Depends on token and limit
 
   // --- useEffect to get token and initial data ---
   useEffect(() => {
@@ -1167,7 +1175,7 @@ export default function UserManagementPage() {
   // --- useEffect to fetch data once token is set ---
   useEffect(() => {
     if (token) {
-      fetchUsers();
+      fetchUsers(1);
     }
   }, [token, fetchUsers]);
 
@@ -1443,6 +1451,13 @@ export default function UserManagementPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Control */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={fetchUsers}
+          />
         </>
       )}
 
@@ -1451,14 +1466,14 @@ export default function UserManagementPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         token={token}
-        onUserAdded={fetchUsers}
+        onUserAdded={() => fetchUsers(currentPage)}
       />
 
       <ImportUsersModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         token={token}
-        onUsersImported={fetchUsers}
+        onUsersImported={() => fetchUsers(currentPage)}
       />
 
       {editingUser && (
@@ -1469,7 +1484,7 @@ export default function UserManagementPage() {
             setIsReadOnlyModal(false); // Reset read-only state on close
           }}
           token={token}
-          onUserUpdated={fetchUsers}
+          onUserUpdated={() => fetchUsers(currentPage)}
           user={editingUser}
           isReadOnly={isReadOnlyModal}
         />
@@ -1480,7 +1495,7 @@ export default function UserManagementPage() {
           isOpen={!!deletingUser}
           onClose={() => setDeletingUser(null)}
           token={token}
-          onUserDeleted={fetchUsers}
+          onUserDeleted={() => fetchUsers(currentPage)}
           user={deletingUser}
         />
       )}

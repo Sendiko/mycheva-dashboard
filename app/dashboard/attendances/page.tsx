@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import api from '@/lib/axios';
 import Image from 'next/image';
+import Pagination from '@/components/Pagination';
 
 // --- Helper function to format the date ---
 const formatDate = (dateString: string) => {
@@ -633,6 +634,11 @@ export default function AttendancesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
+  // --- Pagination State ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [limit] = useState(10);
+
   // --- NEW: State for Edit/Delete Modals ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -640,7 +646,7 @@ export default function AttendancesPage() {
 
 
   // --- Refactored fetchAttendances ---
-  const fetchAttendances = useCallback(async () => {
+  const fetchAttendances = useCallback(async (page = 1) => {
     if (!token) {
       setError('You are not authenticated.');
       setIsLoading(false);
@@ -649,12 +655,14 @@ export default function AttendancesPage() {
 
     setIsLoading(true);
     try {
-      const res = await api.get('/attendance');
+      const res = await api.get(`/attendance?page=${page}&limit=${limit}`);
 
       const data = res.data;
 
       if (data.status === 200 && Array.isArray(data.attendances)) {
         setAttendances(data.attendances);
+        setTotalPages(data.meta?.totalPages || 1);
+        setCurrentPage(page);
         setError(null);
       } else {
         throw new Error(data.message || 'Failed to parse data');
@@ -664,7 +672,7 @@ export default function AttendancesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [token]); // Depends on token
+  }, [token, limit]); // Depends on token and limit
 
   // --- useEffect to get token and initial data ---
   useEffect(() => {
@@ -682,7 +690,7 @@ export default function AttendancesPage() {
   // --- useEffect to fetch data once token is set ---
   useEffect(() => {
     if (token) {
-      fetchAttendances();
+      fetchAttendances(1);
     }
   }, [token, fetchAttendances]);
 
@@ -942,21 +950,31 @@ export default function AttendancesPage() {
         </table>
       </div>
 
+      {/* Pagination Control */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={fetchAttendances}
+      />
+
       {/* --- Render Modals --- */}
       <AddAttendanceModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         token={token}
-        onAttendanceAdded={fetchAttendances}
+        onAttendanceAdded={() => fetchAttendances(currentPage)}
       />
 
       {/* --- NEW: Render Edit/Delete Modals --- */}
       {selectedAttendance && (
         <EditAttendanceModal
           isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedAttendance(null);
+          }}
           token={token}
-          onAttendanceUpdated={fetchAttendances}
+          onAttendanceUpdated={() => fetchAttendances(currentPage)}
           attendance={selectedAttendance}
         />
       )}
@@ -964,9 +982,12 @@ export default function AttendancesPage() {
       {selectedAttendance && (
         <DeleteConfirmationModal
           isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setSelectedAttendance(null);
+          }}
           token={token}
-          onAttendanceDeleted={fetchAttendances}
+          onAttendanceDeleted={() => fetchAttendances(currentPage)}
           attendance={selectedAttendance}
         />
       )}

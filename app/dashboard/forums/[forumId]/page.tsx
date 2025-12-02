@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import api from '@/lib/axios';
+import Pagination from '@/components/Pagination';
 
 // --- Types ---
 type User = {
@@ -341,6 +342,10 @@ export default function ForumDetailPage() {
   const [isReplyEditModalOpen, setIsReplyEditModalOpen] = useState(false);
   const [isReplyDeleteModalOpen, setIsReplyDeleteModalOpen] = useState(false);
 
+  // --- Pagination State (Client-Side) ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(10);
+
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUserId = localStorage.getItem('userId');
@@ -381,6 +386,19 @@ export default function ForumDetailPage() {
       fetchForumDetails();
     }
   }, [token, forumId, fetchForumDetails]);
+
+  // --- Computed Pagination ---
+  const paginatedReplies = useMemo(() => {
+    if (!forum || !forum.Replies) return [];
+    const startIndex = (currentPage - 1) * limit;
+    return forum.Replies.slice(startIndex, startIndex + limit);
+  }, [forum, currentPage, limit]);
+
+  const totalPages = useMemo(() => {
+    if (!forum || !forum.Replies) return 0;
+    return Math.ceil(forum.Replies.length / limit);
+  }, [forum, limit]);
+
 
   const handleOpenReplyEdit = (reply: Reply) => {
     setSelectedReply(reply);
@@ -426,8 +444,8 @@ export default function ForumDetailPage() {
           {/* --- Replies Feed --- */}
           <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-6">
             <div className="space-y-4">
-              {forum.Replies.length > 0 ? (
-                forum.Replies.map((reply) => (
+              {paginatedReplies.length > 0 ? (
+                paginatedReplies.map((reply) => (
                   <ReplyCard
                     key={reply.id}
                     reply={reply}
@@ -440,6 +458,16 @@ export default function ForumDetailPage() {
                 <p className="text-center text-sm text-neutral-500 py-4">Be the first to reply!</p>
               )}
             </div>
+            {/* Pagination Control */}
+            {totalPages > 1 && (
+              <div className="mt-6">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
           </div>
         </>
       )}

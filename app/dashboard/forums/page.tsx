@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import api from '@/lib/axios';
+import Pagination from '@/components/Pagination';
 
 // --- Types ---
 type User = {
@@ -329,6 +330,11 @@ export default function DiscussionPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  // --- Pagination State ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [limit] = useState(10);
+
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUserId = localStorage.getItem('userId');
@@ -346,15 +352,17 @@ export default function DiscussionPage() {
     setUserName(storedName);
   }, []);
 
-  const fetchForums = useCallback(async () => {
+  const fetchForums = useCallback(async (page = 1) => {
     if (!token) return;
 
     setError(null);
     try {
-      const response = await api.get('/forum');
+      const response = await api.get(`/forum?page=${page}&limit=${limit}`);
       const data = response.data;
       if (data.status === 200 && Array.isArray(data.forums)) {
         setForums(data.forums.sort((a: Forum, b: Forum) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        setTotalPages(data.meta?.totalPages || 1);
+        setCurrentPage(page);
       } else {
         throw new Error(data.message || 'Failed to parse forums');
       }
@@ -363,11 +371,11 @@ export default function DiscussionPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, limit]);
 
   useEffect(() => {
     if (token) {
-      fetchForums();
+      fetchForums(1);
     }
   }, [token, fetchForums]);
 
@@ -390,7 +398,7 @@ export default function DiscussionPage() {
           userId={userId}
           userProfileUrl={userProfileUrl}
           userName={userName}
-          onPostAdded={fetchForums}
+          onPostAdded={() => fetchForums(currentPage)}
         />
 
         {isLoading ? (
@@ -400,15 +408,23 @@ export default function DiscussionPage() {
         ) : forums.length === 0 ? (
           <div className="text-center text-neutral-600 py-12">No discussions yet. Start one!</div>
         ) : (
-          forums.map((post) => (
-            <ForumCard
-              key={post.id}
-              post={post}
-              currentUserId={userId}
-              onEditClick={handleOpenForumEdit}
-              onDeleteClick={handleOpenForumDelete}
+          <>
+            {forums.map((post) => (
+              <ForumCard
+                key={post.id}
+                post={post}
+                currentUserId={userId}
+                onEditClick={handleOpenForumEdit}
+                onDeleteClick={handleOpenForumDelete}
+              />
+            ))}
+            {/* Pagination Control */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={fetchForums}
             />
-          ))
+          </>
         )}
       </div>
 
@@ -417,7 +433,7 @@ export default function DiscussionPage() {
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           token={token}
-          onPostUpdated={fetchForums}
+          onPostUpdated={() => fetchForums(currentPage)}
           post={selectedForum}
         />
       )}
@@ -426,7 +442,7 @@ export default function DiscussionPage() {
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}
           token={token}
-          onPostUpdated={fetchForums}
+          onPostUpdated={() => fetchForums(currentPage)}
           post={selectedForum}
         />
       )}

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import api from '@/lib/axios';
 import JourneyView from './JourneyView';
+import Pagination from '@/components/Pagination';
 
 // --- Define a type for the roadmap data ---
 type Roadmap = {
@@ -791,9 +792,14 @@ export default function RoadmapPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [showJourneyView, setShowJourneyView] = useState(false); // NEW: Toggle for Journey View
 
+  // --- Pagination State ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [limit] = useState(10);
+
 
   // --- Refactored fetchRoadmaps ---
-  const fetchRoadmaps = useCallback(async () => {
+  const fetchRoadmaps = useCallback(async (page = 1) => {
     if (!token) {
       setError('You are not authenticated.');
       setIsLoading(false);
@@ -802,12 +808,14 @@ export default function RoadmapPage() {
 
     setError(null);
     try {
-      const res = await api.get('/roadmap');
+      const res = await api.get(`/roadmap?page=${page}&limit=${limit}`);
 
       const data = res.data;
 
       if (data.status === 200 && Array.isArray(data.roadmaps)) {
         setRoadmaps(data.roadmaps);
+        setTotalPages(data.meta?.totalPages || 1);
+        setCurrentPage(page);
       } else {
         throw new Error(data.message || 'Failed to parse roadmap data');
       }
@@ -816,7 +824,7 @@ export default function RoadmapPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [token]); // Depends on token
+  }, [token, limit]); // Depends on token and limit
 
   // --- useEffect to get token and initial data ---
   useEffect(() => {
@@ -836,7 +844,7 @@ export default function RoadmapPage() {
   // --- useEffect to fetch data once token is set ---
   useEffect(() => {
     if (token) {
-      fetchRoadmaps();
+      fetchRoadmaps(1);
     }
   }, [token, fetchRoadmaps]);
 
@@ -883,7 +891,7 @@ export default function RoadmapPage() {
       filteredData.sort((a, b) => {
         // @ts-ignore
         const aValue = getNestedValue(a, sortConfig.key);
-        // @ts-ignore 
+        // @ts-ignore
         const bValue = getNestedValue(b, sortConfig.key);
 
         let comparison = 0;
@@ -1136,19 +1144,28 @@ export default function RoadmapPage() {
         </div>
       )}
 
+      {/* Pagination Control */}
+      {!showJourneyView && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={fetchRoadmaps}
+        />
+      )}
+
       {/* --- Modals --- */}
       <AddRoadmapModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         token={token}
-        onRoadmapAdded={fetchRoadmaps}
+        onRoadmapAdded={() => fetchRoadmaps(currentPage)}
       />
 
       <ImportRoadmapModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         token={token}
-        onRoadmapsImported={fetchRoadmaps}
+        onRoadmapsImported={() => fetchRoadmaps(currentPage)}
       />
 
       {selectedRoadmap && (
@@ -1157,14 +1174,14 @@ export default function RoadmapPage() {
             isOpen={isEditModalOpen}
             onClose={() => setIsEditModalOpen(false)}
             token={token}
-            onRoadmapUpdated={fetchRoadmaps}
+            onRoadmapUpdated={() => fetchRoadmaps(currentPage)}
             roadmap={selectedRoadmap}
           />
           <DeleteRoadmapConfirmationModal
             isOpen={isDeleteModalOpen}
             onClose={() => setIsDeleteModalOpen(false)}
             token={token}
-            onRoadmapDeleted={fetchRoadmaps}
+            onRoadmapDeleted={() => fetchRoadmaps(currentPage)}
             roadmap={selectedRoadmap}
           />
           <ViewRoadmapModal
