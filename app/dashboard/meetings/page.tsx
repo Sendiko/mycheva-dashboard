@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import api from '@/lib/axios';
 import QRCode from 'react-qr-code';
+import Pagination from '@/components/Pagination';
 
 // --- Helper function to format the date ---
 const formatDate = (dateString: string) => {
@@ -797,6 +798,8 @@ const DeleteMeetingConfirmationModal = ({
         <p className="text-body-md text-neutral-700 mb-6">
           Are you sure you want to delete the meeting:
           <strong className="text-neutral-900"> "{meeting.name}"</strong>?
+        </p>
+        <p className="text-body-sm text-error mb-6">
           This action cannot be undone.
         </p>
 
@@ -935,6 +938,12 @@ export default function MeetingsPage() {
   const [userId, setUserId] = useState<number | null>(null);
   const [userDivisionId, setUserDivisionId] = useState<number | null>(null);
 
+  // --- Pagination State ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [limit, setLimit] = useState(10);
+
   // --- State for Search and Sort ---
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'ascending' });
@@ -950,7 +959,7 @@ export default function MeetingsPage() {
 
 
   // --- Refactored fetchMeetings ---
-  const fetchMeetings = useCallback(async () => {
+  const fetchMeetings = useCallback(async (page = 1) => {
     if (!token) {
       setError('You are not authenticated.');
       setIsLoading(false);
@@ -960,12 +969,15 @@ export default function MeetingsPage() {
     // Don't show loading on refresh
     // setIsLoading(true);
     try {
-      const res = await api.get('/event');
+      const res = await api.get(`/event?page=${page}&limit=${limit}`);
 
       const data = res.data;
 
       if (data.status === 200 && Array.isArray(data.events)) {
         setMeetings(data.events);
+        setTotalPages(data.meta?.totalPages || 1);
+        setTotalItems(data.meta?.totalItems || 0);
+        setCurrentPage(page);
         setError(null);
       } else {
         throw new Error(data.message || 'Failed to parse data');
@@ -975,7 +987,7 @@ export default function MeetingsPage() {
     } finally {
       setIsLoading(false); // Only set loading false on initial load or error
     }
-  }, [token]); // Depends on token
+  }, [token, limit]); // Depends on token
 
   // --- NEW: Fetch User Division ---
   const fetchUserDivision = useCallback(async () => {
@@ -1320,6 +1332,16 @@ export default function MeetingsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Control */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={fetchMeetings}
+        limit={limit}
+        onLimitChange={setLimit}
+        totalItems={totalItems}
+      />
 
       {/* --- Render Add Meeting Modal --- */}
       <AddMeetingModal

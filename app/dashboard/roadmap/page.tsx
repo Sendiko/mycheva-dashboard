@@ -795,7 +795,8 @@ export default function RoadmapPage() {
   // --- Pagination State ---
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [limit] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [limit, setLimit] = useState(10);
 
 
   // --- Refactored fetchRoadmaps ---
@@ -815,6 +816,7 @@ export default function RoadmapPage() {
       if (data.status === 200 && Array.isArray(data.roadmaps)) {
         setRoadmaps(data.roadmaps);
         setTotalPages(data.meta?.totalPages || 1);
+        setTotalItems(data.meta?.totalItems || 0);
         setCurrentPage(page);
       } else {
         throw new Error(data.message || 'Failed to parse roadmap data');
@@ -1150,6 +1152,9 @@ export default function RoadmapPage() {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={fetchRoadmaps}
+          limit={limit}
+          onLimitChange={setLimit}
+          totalItems={totalItems}
         />
       )}
 
