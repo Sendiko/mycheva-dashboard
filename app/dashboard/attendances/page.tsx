@@ -637,7 +637,8 @@ export default function AttendancesPage() {
   // --- Pagination State ---
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [limit] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [limit, setLimit] = useState(10);
 
   // --- NEW: State for Edit/Delete Modals ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -662,6 +663,7 @@ export default function AttendancesPage() {
       if (data.status === 200 && Array.isArray(data.attendances)) {
         setAttendances(data.attendances);
         setTotalPages(data.meta?.totalPages || 1);
+        setTotalItems(data.meta?.totalItems || 0);
         setCurrentPage(page);
         setError(null);
       } else {
@@ -955,6 +957,9 @@ export default function AttendancesPage() {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={fetchAttendances}
+        limit={limit}
+        onLimitChange={setLimit}
+        totalItems={totalItems}
       />
 
       {/* --- Render Modals --- */}
