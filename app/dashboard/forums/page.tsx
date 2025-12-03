@@ -333,7 +333,7 @@ export default function DiscussionPage() {
   // --- Pagination State ---
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(10);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -423,6 +423,8 @@ export default function DiscussionPage() {
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={fetchForums}
+              limit={limit}
+              onLimitChange={setLimit}
             />
           </>
         )}

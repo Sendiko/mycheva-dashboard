@@ -1119,7 +1119,8 @@ export default function UserManagementPage() {
   // --- Pagination State ---
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [limit] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [limit, setLimit] = useState(10);
 
 
   // --- Refactored fetchUsers ---
@@ -1150,6 +1151,7 @@ export default function UserManagementPage() {
       if (data.status === 200 && Array.isArray(data.users)) {
         setUsers(data.users);
         setTotalPages(data.meta?.totalPages || 1);
+        setTotalItems(data.meta?.totalItems || 0);
         setCurrentPage(page);
       } else {
         throw new Error(data.message || 'Failed to parse user data');
@@ -1457,6 +1459,9 @@ export default function UserManagementPage() {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={fetchUsers}
+            limit={limit}
+            onLimitChange={setLimit}
+            totalItems={totalItems}
           />
         </>
       )}

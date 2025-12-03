@@ -320,8 +320,8 @@ export default function DashboardPage() {
         let attendanceCount = 0;
 
         if (usersRes) {
-          const usersData = usersRes.data;
-          if (usersData.status === 200) userCount = usersData.users.length;
+          // @ts-ignore
+          userCount = usersRes.data.meta.totalItems;
         }
 
         if (attendanceRes) {
