@@ -170,14 +170,6 @@ const AddAttendanceModal = ({
   const filteredUsers = useMemo(() => {
     let filtered = users;
 
-    // Filter by Division if an event is selected
-    if (selectedEventId) {
-      const selectedEvent = events.find(e => e.id === Number(selectedEventId));
-      if (selectedEvent) {
-        filtered = filtered.filter(user => user.UserDatum.Division.name === selectedEvent.Division.name);
-      }
-    }
-
     // Filter by Search Term
     if (userSearch) {
       const lowerSearch = userSearch.toLowerCase();
