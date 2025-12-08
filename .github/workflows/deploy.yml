@@ -44,8 +44,7 @@ jobs:
           port: ${{ secrets.SSH_PORT || 2222 }} 
           script: |
             cd mycheva-dashboard/
-            git pull origin deployment 
-            nvm use --lts
-            npm install --omit=dev 
-            npm run build 
-            pm2 restart mycheva-dashboard
+            git pull origin deployment
+            /home/sendiko/.nvm/versions/node/v24.11.1/bin/npm install --omit=dev 
+            /home/sendiko/.nvm/versions/node/v24.11.1/bin/npm run build 
+            systemctl restart mycheva-dashboard
