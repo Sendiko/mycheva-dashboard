@@ -81,14 +81,18 @@ type User = {
   name: string;
   UserDatum: {
     fullName: string;
-    divisionId: number;
+    Division: {
+      name: string,
+    }
   };
 };
 
 type Event = {
   id: number;
   name: string;
-  divisionId: number;
+  Division: {
+    name: string,
+  }
 };
 
 // --- Define types for sorting ---
@@ -170,7 +174,7 @@ const AddAttendanceModal = ({
     if (selectedEventId) {
       const selectedEvent = events.find(e => e.id === Number(selectedEventId));
       if (selectedEvent) {
-        filtered = filtered.filter(user => user.UserDatum?.divisionId === selectedEvent.divisionId);
+        filtered = filtered.filter(user => user.UserDatum.Division.name === selectedEvent.Division.name);
       }
     }
 
