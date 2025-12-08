@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
+import api from '@/lib/axios';
 import QRCode from 'react-qr-code';
+import Pagination from '@/components/Pagination';
 
 // --- Helper function to format the date ---
 const formatDate = (dateString: string) => {
@@ -133,9 +134,7 @@ const AddMeetingModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const res = await api.get('/division');
           const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
 
@@ -166,7 +165,7 @@ const AddMeetingModal = ({
       // API expects time with seconds, append ':00'
       const formattedTime = `${time}:00`;
 
-      const res = await axios.post('https://api-my.chevalierlabsas.org/event', {
+      const res = await api.post('/event', {
         name,
         desc,
         type,
@@ -174,11 +173,6 @@ const AddMeetingModal = ({
         date,
         time: formattedTime,
         divisionId: Number(divisionId),
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        }
       });
 
       const data = res.data;
@@ -506,9 +500,7 @@ const EditMeetingModal = ({
         setIsLoading(true);
         setError(null);
         try {
-          const res = await axios.get('https://api-my.chevalierlabsas.org/division', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const res = await api.get('/division');
           const data = res.data;
           if (data.status === 200) setDivisions(data.divisions);
 
@@ -553,7 +545,7 @@ const EditMeetingModal = ({
       const formattedTime = `${time}:00`;
 
       // API: PUT to /event/:id
-      const res = await axios.put(`https://api-my.chevalierlabsas.org/event/${meeting.id}`, {
+      const res = await api.put(`/event/${meeting.id}`, {
         name,
         desc,
         type,
@@ -561,11 +553,6 @@ const EditMeetingModal = ({
         date,
         time: formattedTime,
         divisionId: Number(divisionId),
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        }
       });
 
       const data = res.data;
@@ -777,14 +764,7 @@ const DeleteMeetingConfirmationModal = ({
 
     try {
       // API: DELETE to /event/:id
-      const res = await axios.delete(`https://api-my.chevalierlabsas.org/event/${meeting.id}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        // If API requires body for DELETE, axios supports `data` here
-        // data: { eventId: meeting.id },
-      });
+      const res = await api.delete(`/event/${meeting.id}`);
 
       const data = res.data;
       // Check for successful status (might be 200 or 204 No Content)
@@ -818,6 +798,8 @@ const DeleteMeetingConfirmationModal = ({
         <p className="text-body-md text-neutral-700 mb-6">
           Are you sure you want to delete the meeting:
           <strong className="text-neutral-900"> "{meeting.name}"</strong>?
+        </p>
+        <p className="text-body-sm text-error mb-6">
           This action cannot be undone.
         </p>
 
@@ -943,8 +925,8 @@ const ViewMeetingModal = ({
       </div>
     </div>
   );
-};
 
+};
 
 export default function MeetingsPage() {
   // --- State for data, loading, and errors ---
@@ -953,6 +935,14 @@ export default function MeetingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [roleId, setRoleId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [userDivisionId, setUserDivisionId] = useState<number | null>(null);
+
+  // --- Pagination State ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [limit, setLimit] = useState(10);
 
   // --- State for Search and Sort ---
   const [searchTerm, setSearchTerm] = useState('');
@@ -969,7 +959,7 @@ export default function MeetingsPage() {
 
 
   // --- Refactored fetchMeetings ---
-  const fetchMeetings = useCallback(async () => {
+  const fetchMeetings = useCallback(async (page = 1) => {
     if (!token) {
       setError('You are not authenticated.');
       setIsLoading(false);
@@ -979,17 +969,15 @@ export default function MeetingsPage() {
     // Don't show loading on refresh
     // setIsLoading(true);
     try {
-      const res = await axios.get('https://api-my.chevalierlabsas.org/event', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const res = await api.get(`/event?page=${page}&limit=${limit}`);
 
       const data = res.data;
 
       if (data.status === 200 && Array.isArray(data.events)) {
         setMeetings(data.events);
+        setTotalPages(data.meta?.totalPages || 1);
+        setTotalItems(data.meta?.totalItems || 0);
+        setCurrentPage(page);
         setError(null);
       } else {
         throw new Error(data.message || 'Failed to parse data');
@@ -999,7 +987,22 @@ export default function MeetingsPage() {
     } finally {
       setIsLoading(false); // Only set loading false on initial load or error
     }
-  }, [token]); // Depends on token
+  }, [token, limit]); // Depends on token
+
+  // --- NEW: Fetch User Division ---
+  const fetchUserDivision = useCallback(async () => {
+    if (!token || !userId) return;
+
+    try {
+      const res = await api.get(`/userdata/${userId}`);
+      const data = res.data;
+      if (data.status === 200 && data.user && data.user.UserDatum) {
+        setUserDivisionId(data.user.UserDatum.divisionId);
+      }
+    } catch (err) {
+      console.error("Failed to fetch user division:", err);
+    }
+  }, [token, userId]);
 
   // --- useEffect to get token and initial data ---
   useEffect(() => {
@@ -1012,19 +1015,29 @@ export default function MeetingsPage() {
     setToken(storedToken);
     const storedRoleId = localStorage.getItem('roleId');
     if (storedRoleId) setRoleId(parseInt(storedRoleId, 10));
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) setUserId(parseInt(storedUserId, 10));
   }, []);
 
   // --- useEffect to fetch data once token is set ---
   useEffect(() => {
     if (token) {
       fetchMeetings();
+      if (userId) {
+        fetchUserDivision();
+      }
     }
-  }, [token, fetchMeetings]);
+  }, [token, userId, fetchMeetings, fetchUserDivision]);
 
 
   // --- useMemo to process data for search and sort ---
   const processedMeetings = useMemo(() => {
     let filteredData = [...meetings];
+
+    // NEW: Filter by Division for Mentors (7) and Students (8)
+    if ((roleId === 7 || roleId === 8) && userDivisionId) {
+      filteredData = filteredData.filter(item => item.divisionId === userDivisionId);
+    }
 
     // 1. Filter data based on search term
     if (searchTerm) {
@@ -1110,17 +1123,16 @@ export default function MeetingsPage() {
     setIsQrModalOpen(true);
   };
 
-
   return (
     <div>
       {/* --- Top Bar: Header and Add Button --- */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <h1 className="text-4xl text-neutral-900">
           Meetings
         </h1>
-        {roleId !== 2 && (
+        {roleId === 7 || roleId === 1 ? (
           <button
-            className="flex items-center space-x-2 rounded-lg bg-primary-500 py-2 px-4 text-white font-semibold text-body-md shadow-sm hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+            className="w-fit flex items-center space-x-2 rounded-lg bg-primary-500 py-2 px-4 text-white font-semibold text-body-md shadow-sm hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
             onClick={() => setIsModalOpen(true)}
           >
             <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1128,7 +1140,7 @@ export default function MeetingsPage() {
             </svg>
             <span>Add New</span>
           </button>
-        )}
+        ) : null}
       </div>
 
       {/* --- Search Bar --- */}
@@ -1320,6 +1332,16 @@ export default function MeetingsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Control */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={fetchMeetings}
+        limit={limit}
+        onLimitChange={setLimit}
+        totalItems={totalItems}
+      />
 
       {/* --- Render Add Meeting Modal --- */}
       <AddMeetingModal

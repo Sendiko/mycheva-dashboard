@@ -1,9 +1,10 @@
-'use client'; // <-- Convert to Client Component
+'use client';
 
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
-import Image from 'next/image'; // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
+import api from '@/lib/axios';
+import Image from 'next/image';
+import Pagination from '@/components/Pagination';
 
 // --- Helper function to format the date ---
 const formatDate = (dateString: string) => {
@@ -80,12 +81,18 @@ type User = {
   name: string;
   UserDatum: {
     fullName: string;
+    Division: {
+      name: string,
+    }
   };
 };
 
 type Event = {
   id: number;
   name: string;
+  Division: {
+    name: string,
+  }
 };
 
 // --- Define types for sorting ---
@@ -103,32 +110,33 @@ const getNestedValue = (obj: any, path: string) => {
 
 
 // --- AddAttendanceModal Component ---
-const AddAttendanceModal = ({ 
-  isOpen, 
-  onClose, 
+const AddAttendanceModal = ({
+  isOpen,
+  onClose,
   token,
   onAttendanceAdded
-}: { 
-  isOpen: boolean, 
-  onClose: () => void, 
+}: {
+  isOpen: boolean,
+  onClose: () => void,
   token: string | null,
   onAttendanceAdded: () => void
 }) => {
   // Dropdown data state
   const [users, setUsers] = useState<User[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  
+
   // Form input state
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedEventId, setSelectedEventId] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [userSearch, setUserSearch] = useState(''); // New state for user search
 
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  
+
   const statusOptions = ['present', 'absent', 'excused', 'sick'];
 
   // Fetch users and events when modal opens
@@ -139,16 +147,12 @@ const AddAttendanceModal = ({
         setError(null);
         try {
           // Fetch Users
-          const userRes = await axios.get('https://api-my.chevalierlabsas.org/user/all', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const userRes = await api.get('/user/all?students=true&detailed=true&limit=500');
           const userData = userRes.data;
           if (userData.status === 200) setUsers(userData.users);
 
           // Fetch Events
-          const eventRes = await axios.get('https://api-my.chevalierlabsas.org/event', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const eventRes = await api.get('/event?limit=500');
           const eventData = eventRes.data;
           if (eventData.status === 200) setEvents(eventData.events);
 
@@ -162,6 +166,29 @@ const AddAttendanceModal = ({
     }
   }, [isOpen, token]);
 
+  // Filter users based on selected event and search term
+  const filteredUsers = useMemo(() => {
+    let filtered = users;
+
+    // Filter by Division if an event is selected
+    if (selectedEventId) {
+      const selectedEvent = events.find(e => e.id === Number(selectedEventId));
+      if (selectedEvent) {
+        filtered = filtered.filter(user => user.UserDatum.Division.name === selectedEvent.Division.name);
+      }
+    }
+
+    // Filter by Search Term
+    if (userSearch) {
+      const lowerSearch = userSearch.toLowerCase();
+      filtered = filtered.filter(user =>
+        (user.UserDatum?.fullName || user.name).toLowerCase().includes(lowerSearch)
+      );
+    }
+
+    return filtered;
+  }, [users, selectedEventId, events, userSearch]);
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,18 +197,16 @@ const AddAttendanceModal = ({
       setSuccessMessage(null); // Clear any previous success
       return;
     }
-    
+
     setIsSubmitting(true);
     setError(null);
     setSuccessMessage(null); // Clear messages
 
     try {
-      const res = await axios.post('https://api-my.chevalierlabsas.org/attendance', {
+      const res = await api.post('/attendance', {
         userId: Number(selectedUserId),
         eventId: Number(selectedEventId),
         status: selectedStatus,
-      }, {
-        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       const data = res.data;
@@ -199,7 +224,7 @@ const AddAttendanceModal = ({
     } catch (err) {
       setError((err as Error).message);
       setIsSubmitting(false);
-    } 
+    }
   };
 
   // Reset form when closing
@@ -207,6 +232,7 @@ const AddAttendanceModal = ({
     setSelectedUserId('');
     setSelectedEventId('');
     setSelectedStatus('');
+    setUserSearch('');
     setError(null);
     setSuccessMessage(null);
     setIsSubmitting(false);
@@ -229,32 +255,13 @@ const AddAttendanceModal = ({
             </svg>
           </button>
         </div>
-        
+
         {isLoading ? (
           <div className="py-12 text-center text-neutral-600">Loading form data...</div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* User Dropdown */}
-            <div>
-              <label htmlFor="user" className="block text-body-md font-semibold text-neutral-800 mb-2">
-                User
-              </label>
-              <select
-                id="user"
-                value={selectedUserId}
-                onChange={(e) => setSelectedUserId(e.target.value)}
-                className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
-              >
-                <option value="" disabled>Select a user</option>
-                {users.map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.UserDatum?.fullName || user.name}
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            {/* Event Dropdown */}
+            {/* Event Dropdown (Moved to Top) */}
             <div>
               <label htmlFor="event" className="block text-body-md font-semibold text-neutral-800 mb-2">
                 Event
@@ -262,7 +269,10 @@ const AddAttendanceModal = ({
               <select
                 id="event"
                 value={selectedEventId}
-                onChange={(e) => setSelectedEventId(e.target.value)}
+                onChange={(e) => {
+                  setSelectedEventId(e.target.value);
+                  setSelectedUserId(''); // Reset user selection when event changes
+                }}
                 className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
               >
                 <option value="" disabled>Select an event</option>
@@ -270,6 +280,42 @@ const AddAttendanceModal = ({
                   <option key={event.id} value={event.id}>{event.name}</option>
                 ))}
               </select>
+            </div>
+
+            {/* User Dropdown with Search */}
+            <div>
+              <label htmlFor="user" className="block text-body-md font-semibold text-neutral-800 mb-2">
+                User
+              </label>
+
+              {/* Search Input */}
+              <input
+                type="text"
+                placeholder="Search user..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="w-full mb-2 rounded-lg border border-neutral-300 px-3 py-2 text-body-sm text-neutral-800 placeholder-neutral-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-200 outline-none transition-all"
+              />
+
+              <select
+                id="user"
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+              >
+                <option value="" disabled>Select a user</option>
+                {filteredUsers.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {user.UserDatum?.fullName || user.name}
+                  </option>
+                ))}
+                {filteredUsers.length === 0 && (
+                  <option disabled>No users found</option>
+                )}
+              </select>
+              {selectedEventId && filteredUsers.length === 0 && (
+                <p className="text-xs text-neutral-500 mt-1">No users found for this event's division.</p>
+              )}
             </div>
 
             {/* Status Dropdown */}
@@ -289,7 +335,7 @@ const AddAttendanceModal = ({
                 ))}
               </select>
             </div>
-            
+
             {/* --- Improved Feedback --- */}
             {error && (
               <p className="text-body-md text-error p-3 bg-error/10 rounded-lg">
@@ -297,7 +343,7 @@ const AddAttendanceModal = ({
               </p>
             )}
             {successMessage && (
-              <p className="text-body-md text-success p-3 bg-success/1  0 rounded-lg">
+              <p className="text-body-md text-success p-3 bg-success/10 rounded-lg">
                 {successMessage}
               </p>
             )}
@@ -345,7 +391,7 @@ const EditAttendanceModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  
+
   const statusOptions = ['present', 'absent', 'excused', 'sick'];
 
   // Update state if the prop changes (e.g., opening modal for a different user)
@@ -358,17 +404,15 @@ const EditAttendanceModal = ({
   // Handle form submission for EDIT (PUT)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     setIsSubmitting(true);
     setError(null);
     setSuccessMessage(null);
 
     try {
       // Per your API spec: PUT to /attendance with ID and status in body
-      const res = await axios.put(`https://api-my.chevalierlabsas.org/attendance/${attendance.id}`, {
+      const res = await api.put(`/attendance/${attendance.id}`, {
         status: selectedStatus,
-      }, {
-        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       const data = res.data;
@@ -379,7 +423,7 @@ const EditAttendanceModal = ({
       // Success
       setSuccessMessage('Attendance updated successfully!');
       onAttendanceUpdated(); // Refresh the table
-      
+
       setTimeout(() => {
         handleClose();
       }, 1500);
@@ -414,7 +458,7 @@ const EditAttendanceModal = ({
             </svg>
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Read-only User */}
           <div>
@@ -452,7 +496,7 @@ const EditAttendanceModal = ({
               ))}
             </select>
           </div>
-          
+
           {/* Feedback */}
           {error && (
             <p className="text-body-md text-error p-3 bg-error/10 rounded-lg">
@@ -513,9 +557,7 @@ const DeleteConfirmationModal = ({
 
     try {
       // Per your API spec: DELETE to /attendance with ID in body
-      const res = await axios.delete(`https://api-my.chevalierlabsas.org/attendance/${attendance.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const res = await api.delete(`/attendance/${attendance.id}`);
 
       const data = res.data;
       if (data.status !== 200) {
@@ -595,15 +637,21 @@ export default function AttendancesPage() {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'ascending' });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
-  
+
+  // --- Pagination State ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [limit, setLimit] = useState(10);
+
   // --- NEW: State for Edit/Delete Modals ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
 
-  
+
   // --- Refactored fetchAttendances ---
-  const fetchAttendances = useCallback(async () => {
+  const fetchAttendances = useCallback(async (page = 1) => {
     if (!token) {
       setError('You are not authenticated.');
       setIsLoading(false);
@@ -612,14 +660,15 @@ export default function AttendancesPage() {
 
     setIsLoading(true);
     try {
-      const res = await axios.get('https://api-my.chevalierlabsas.org/attendance', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const res = await api.get(`/attendance?page=${page}&limit=${limit}`);
 
       const data = res.data;
 
       if (data.status === 200 && Array.isArray(data.attendances)) {
         setAttendances(data.attendances);
+        setTotalPages(data.meta?.totalPages || 1);
+        setTotalItems(data.meta?.totalItems || 0);
+        setCurrentPage(page);
         setError(null);
       } else {
         throw new Error(data.message || 'Failed to parse data');
@@ -629,7 +678,7 @@ export default function AttendancesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [token]); // Depends on token
+  }, [token, limit]); // Depends on token and limit
 
   // --- useEffect to get token and initial data ---
   useEffect(() => {
@@ -647,7 +696,7 @@ export default function AttendancesPage() {
   // --- useEffect to fetch data once token is set ---
   useEffect(() => {
     if (token) {
-      fetchAttendances();
+      fetchAttendances(1);
     }
   }, [token, fetchAttendances]);
 
@@ -674,7 +723,7 @@ export default function AttendancesPage() {
         const aValue = getNestedValue(a, sortConfig.key);
         // @ts-ignore
         const bValue = getNestedValue(b, sortConfig.key);
-        
+
         let comparison = 0;
 
         if (aValue === null || aValue === undefined) comparison = -1;
@@ -687,7 +736,7 @@ export default function AttendancesPage() {
         } else if (aValue < bValue) {
           comparison = -1;
         }
-        
+
         return sortConfig.direction === 'ascending' ? comparison : -comparison;
       });
     }
@@ -725,13 +774,22 @@ export default function AttendancesPage() {
 
   return (
     <div>
-      <h1 className="text-4xl text-neutral-900 mb-6">
-        Attendances
-      </h1>
-      
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <h1 className="text-4xl text-neutral-900">
+          Attendances
+        </h1>
+        <button
+          className="flex items-center gap-2 rounded-lg bg-primary-500 py-2.5 px-4 font-semibold text-body-md text-white shadow-md hover:bg-primary-600 transition-all hover:shadow-lg w-fit"
+          onClick={() => setIsModalOpen(true)}
+        >
+          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          <span>Add New</span>
+        </button>
+      </div>
       {/* --- Top Bar: Search and Add Button --- */}
-      <div className="flex justify-between items-center mb-4">
-        {/* --- Search Bar --- */}
+      <div className="mb-4">
         <div className="relative">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3">
             <svg className="h-5 w-5 text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -740,23 +798,12 @@ export default function AttendancesPage() {
           </span>
           <input
             type="text"
-            placeholder="Search by name, event, date, or status..."
+            placeholder="Search by name, type, details, or date..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full max-w-sm rounded-lg border border-neutral-300 py-2 pl-10 pr-4 text-body-md text-neutral-800 placeholder-neutral-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
           />
         </div>
-        
-        {/* --- Add New Button --- */}
-        <button
-          className="flex items-center space-x-2 rounded-lg bg-primary-500 py-2 px-4 text-white font-semibold text-body-md shadow-sm hover:bg-primary-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          <span>Add New</span>
-        </button>
       </div>
 
       {/* Table Container */}
@@ -766,9 +813,9 @@ export default function AttendancesPage() {
           <thead className="border-b border-primary-200 bg-primary-50">
             <tr className="text-body-sm font-semibold text-primary-800">
               <th className="p-4">#</th>
-              
+
               {/* Sortable Headers */}
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('user.UserDatum.fullName')}
               >
@@ -776,7 +823,7 @@ export default function AttendancesPage() {
                   Person {getSortIcon('user.UserDatum.fullName')}
                 </div>
               </th>
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('Event.name')}
               >
@@ -784,7 +831,7 @@ export default function AttendancesPage() {
                   Event Name {getSortIcon('Event.name')}
                 </div>
               </th>
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('Event.date')}
               >
@@ -792,7 +839,7 @@ export default function AttendancesPage() {
                   Date {getSortIcon('Event.date')}
                 </div>
               </th>
-              <th 
+              <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('status')}
               >
@@ -804,7 +851,7 @@ export default function AttendancesPage() {
               <th className="p-4">Actions</th>
             </tr>
           </thead>
-          
+
           {/* Table Body: Conditional Rendering */}
           <tbody>
             {isLoading && (!attendances || attendances.length === 0) ? (
@@ -831,8 +878,8 @@ export default function AttendancesPage() {
             ) : (
               // --- Data State ---
               processedAttendances.map((item, index) => (
-                <tr 
-                  key={item.id} 
+                <tr
+                  key={item.id}
                   className={`
                     border-b border-neutral-200 text-body-md text-neutral-800
                     ${index % 2 === 0 ? 'bg-white' : 'bg-neutral-50'}
@@ -842,7 +889,7 @@ export default function AttendancesPage() {
                   <td className="p-4 font-medium text-neutral-500">
                     {index + 1}
                   </td>
-                  
+
                   {/* Person (Photo + Name) */}
                   <td className="p-4">
                     <div className="flex items-center space-x-3">
@@ -855,7 +902,7 @@ export default function AttendancesPage() {
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.onerror = null; // prevent infinite loop
-                          target.src = `httpsD://placehold.co/40x40/DEDEDE/424242?text=${item.user.name.charAt(0)}`;
+                          target.src = `https://placehold.co/40x40/DEDEDE/424242?text=${item.user.name.charAt(0)}`;
                         }}
                       />
                       <span className="font-semibold">
@@ -863,17 +910,17 @@ export default function AttendancesPage() {
                       </span>
                     </div>
                   </td>
-                  
+
                   {/* Event Name */}
                   <td className="p-4">
                     {item.Event.name}
                   </td>
-                  
+
                   {/* Date - Now formatted! */}
                   <td className="p-4">
                     {formatDate(item.Event.date)}
                   </td>
-                  
+
                   {/* Status */}
                   <td className="p-4">
                     <StatusBadge status={item.status} />
@@ -908,32 +955,48 @@ export default function AttendancesPage() {
           </tbody>
         </table>
       </div>
-      
+
+      {/* Pagination Control */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={fetchAttendances}
+        limit={limit}
+        onLimitChange={setLimit}
+        totalItems={totalItems}
+      />
+
       {/* --- Render Modals --- */}
-      <AddAttendanceModal 
+      <AddAttendanceModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         token={token}
-        onAttendanceAdded={fetchAttendances}
+        onAttendanceAdded={() => fetchAttendances(currentPage)}
       />
-      
+
       {/* --- NEW: Render Edit/Delete Modals --- */}
       {selectedAttendance && (
         <EditAttendanceModal
           isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedAttendance(null);
+          }}
           token={token}
-          onAttendanceUpdated={fetchAttendances}
+          onAttendanceUpdated={() => fetchAttendances(currentPage)}
           attendance={selectedAttendance}
         />
       )}
-      
+
       {selectedAttendance && (
         <DeleteConfirmationModal
           isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setSelectedAttendance(null);
+          }}
           token={token}
-          onAttendanceDeleted={fetchAttendances}
+          onAttendanceDeleted={() => fetchAttendances(currentPage)}
           attendance={selectedAttendance}
         />
       )}

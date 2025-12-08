@@ -48,4 +48,4 @@ jobs:
             nvm use --lts
             npm install --omit=dev 
             npm run build 
-            pm2 restart mycheva
+            pm2 restart mycheva-dashboard

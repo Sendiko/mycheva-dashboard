@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import axios from 'axios';
-import Image from 'next/image'; // <-- PREVIEW FIX: Commented out for the preview environment.
-import { useRouter } from 'next/navigation'; // <-- PREVIEW FIX: Commented out for the preview environment.
+import api from '@/lib/axios';
+import { useRouter } from 'next/navigation';
+import { ArrowRight, Lock, User } from 'lucide-react';
 
 export default function LoginPage() {
   const [name, setName] = useState('');
@@ -11,14 +11,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // --- PREVIEW FIX ---
-  // In your local project, uncomment the line below:
-  const router = useRouter();
-  // For the preview, we'll use a placeholder:
-  // const router = { push: (path: string) => console.log(`Redirecting to ${path}`) };
-  // ---------------------
 
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,120 +21,132 @@ export default function LoginPage() {
     setSuccess(null);
 
     try {
-      const res = await axios.post('https://api-my.chevalierlabsas.org/login', { name, password, mobile: false }, {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const res = await api.post('/login', { name, password, mobile: false });
 
       const data = res.data;
 
       if (data.status === 200 && data.token) {
         setSuccess(data.message || 'Login successful!');
-        
-        // 1. Save the token
+
         localStorage.setItem('token', data.token);
         localStorage.setItem('userId', data.user.id);
         localStorage.setItem('roleId', data.user.roleId);
-        
-        // 2. Redirect to dashboard
-        // We add a small delay so the user can see the success message
+
         setTimeout(() => {
-          router.push('/dashboard'); 
-        }, 1000); // 1-second delay before redirect
+          router.push('/dashboard');
+        }, 1000);
 
       } else {
         setError(data.message || 'Login failed. Please try again.');
         setIsLoading(false);
       }
-    } catch (err) {
-      setError('An error occurred. Please check your connection.');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'An error occurred. Please check your connection.');
       setIsLoading(false);
     }
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-neutral-100">
-      <div className="w-full max-w-md rounded-3xl bg-white p-10 shadow-lg">
-        
-        {/* --- PREVIEW FIX ---
-          The <Image> component is replaced with a div
-          for the preview. In your local Next.js project,
-          you should use the original <Image> component code.
-        ----------------------*/}
-        <div className="mx-auto mb-6 h-40 w-40 overflow-hidden rounded-full">
-          <Image
-            src="/image/logo.png" // Make sure this path is correct!
-            alt="MyCheva Logo"
-            width={160}
-            height={160}
-            className="object-contain"
-            priority
-          />
+    <div className="min-h-screen w-full flex bg-white">
+      {/* Left Pane - Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-12 lg:px-24 py-12 z-10">
+        <div className="w-full max-w-md mx-auto">
+
+          <div className="mb-10">
+            <h1 className="text-4xl font-bold text-[var(--color-neutral-900)] mb-3">Welcome Back</h1>
+            <p className="text-[var(--color-neutral-500)]">
+              Please enter your details to sign in to your account.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+                Username
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--color-neutral-400)]">
+                  <User size={20} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Enter your username"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-[var(--color-neutral-200)] text-[var(--color-neutral-900)] placeholder-[var(--color-neutral-400)] focus:border-[var(--color-primary-500)] focus:ring-2 focus:ring-[var(--color-primary-100)] outline-none transition-all bg-[var(--color-neutral-50)] focus:bg-white"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--color-neutral-400)]">
+                  <Lock size={20} />
+                </div>
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-[var(--color-neutral-200)] text-[var(--color-neutral-900)] placeholder-[var(--color-neutral-400)] focus:border-[var(--color-primary-500)] focus:ring-2 focus:ring-[var(--color-primary-100)] outline-none transition-all bg-[var(--color-neutral-50)] focus:bg-white"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-[var(--color-primary-200)] disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                'Logging in...'
+              ) : (
+                <>
+                  Sign In <ArrowRight size={20} />
+                </>
+              )}
+            </button>
+
+            {error && (
+              <div className="p-4 rounded-xl bg-[var(--color-error)]/10 text-[var(--color-error)] text-sm text-center">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="p-4 rounded-xl bg-[var(--color-success)]/10 text-[var(--color-success)] text-sm text-center">
+                {success}
+              </div>
+            )}
+          </form>
+        </div>
+      </div>
+
+      {/* Right Pane - Visual */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-[var(--color-neutral-900)] items-center justify-center overflow-hidden">
+        {/* Abstract Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-primary-900)] to-[var(--color-neutral-900)] opacity-90"></div>
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center mix-blend-overlay opacity-40"></div>
+
+        {/* Content Overlay */}
+        <div className="relative z-10 max-w-lg text-center px-8">
+          <h2 className="text-4xl font-bold text-white mb-6">
+            Research & Innovation
+          </h2>
+          <p className="text-[var(--color-primary-100)] text-lg leading-relaxed">
+            Join the Chevalier Laboratory SAS community. Explore the latest in IT products, programming, and technology research.
+          </p>
         </div>
 
-        {/* Heading */}
-        <h1 className="text-4xl text-neutral-900 text-center mb-2">Welcome Back!</h1>
-        <p className="text-body-md font-bold text-neutral-700 text-center mb-8">
-          Please log in to your account.
-        </p>
-
-        {/* Form */}
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          {/* Username */}
-          <div>
-            <label
-              htmlFor="username"
-              className="block text-body-md font-semibold text-neutral-900 mb-2"
-            >
-              Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              placeholder="Enter your username"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 placeholder-neutral-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
-              required
-            />
-          </div>
-
-          {/* Password */}
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-body-md font-semibold text-neutral-900 mb-2"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-body-md text-neutral-800 placeholder-neutral-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
-              required
-            />
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full mt-4 rounded-lg bg-primary-500 py-3 text-white font-semibold text-body-lg shadow-sm hover:bg-primary-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Logging in...' : 'Log In'}
-          </button>
-
-          {/* Messages */}
-          {error && (
-            <p className="text-center text-body-md text-error">{error}</p>
-          )}
-          {success && (
-            <p className="text-center text-body-md text-success">{success}</p>
-          )}
-        </form>
+        {/* Decorative Circles */}
+        <div className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-[var(--color-primary-500)] opacity-20 blur-3xl"></div>
+        <div className="absolute top-24 right-24 w-96 h-96 rounded-full bg-[var(--color-info)] opacity-20 blur-3xl"></div>
       </div>
-    </main>
+    </div>
   );
 }

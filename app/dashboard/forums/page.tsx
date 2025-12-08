@@ -1,9 +1,10 @@
-'use client'; 
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image'; // <-- PREVIEW FIX
-import Link from 'next/link'; // <-- PREVIEW FIX
-import axios from 'axios';
+import Image from 'next/image';
+import Link from 'next/link';
+import api from '@/lib/axios';
+import Pagination from '@/components/Pagination';
 
 // --- Types ---
 type User = {
@@ -21,6 +22,7 @@ type Reply = {
   forumId: number;
   content: string;
   createdAt: string;
+  updatedAt: string;
   user: User;
 };
 
@@ -29,8 +31,9 @@ type Forum = {
   userId: number;
   content: string;
   createdAt: string;
+  updatedAt: string;
   user: User;
-  Replies: Reply[]; // We still need this for the reply count
+  Replies: Reply[];
 };
 
 // --- Helper function to format timestamp ---
@@ -38,7 +41,6 @@ const formatTimestamp = (dateString: string) => {
   if (!dateString) return 'N/A';
   try {
     const date = new Date(dateString);
-    // Formats to "Oct 27, 2025, 6:40 AM"
     return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -53,15 +55,15 @@ const formatTimestamp = (dateString: string) => {
   }
 };
 
-// --- Forum Card Component (Simplified for Feed) ---
-const ForumCard = ({ 
-  post, 
-  currentUserId, 
+// --- Forum Card Component ---
+const ForumCard = ({
+  post,
+  currentUserId,
   onEditClick,
   onDeleteClick,
 }: {
-  post: Forum, 
-  currentUserId: number | null, 
+  post: Forum,
+  currentUserId: number | null,
   onEditClick: (post: Forum) => void,
   onDeleteClick: (post: Forum) => void,
 }) => {
@@ -72,7 +74,6 @@ const ForumCard = ({
       {/* --- Card Header --- */}
       <div className="flex space-x-4 p-6">
         {/* Profile Pic */}
-        {/* <Image ... /> */} {/* PREVIEW FIX */}
         <img
           src={post.user.profileUrl}
           alt={post.user.name}
@@ -85,7 +86,7 @@ const ForumCard = ({
             target.src = `https://placehold.co/48x48/DEDEDE/424242?text=${post.user.name.charAt(0)}`;
           }}
         />
-        
+
         {/* Content */}
         <div className="flex-1">
           <div className="flex items-center justify-between">
@@ -105,8 +106,13 @@ const ForumCard = ({
               </div>
             )}
           </div>
-          <span className="text-body-md text-neutral-500">{formatTimestamp(post.createdAt)}</span>
-          
+          <span className="text-body-md text-neutral-500">
+            {formatTimestamp(post.createdAt)}
+            {post.updatedAt && post.createdAt !== post.updatedAt && (
+              <span className="ml-1 text-neutral-400 italic">(edited)</span>
+            )}
+          </span>
+
           <Link href={`/dashboard/forums/${post.id}`} className="block mt-2">
             <p className="text-body-md text-neutral-800 whitespace-pre-line">
               {post.content}
@@ -128,19 +134,19 @@ const ForumCard = ({
   );
 };
 
-// --- Create Post Form (Top of Page) ---
-const CreatePostForm = ({ 
-  token, 
+// --- Create Post Form ---
+const CreatePostForm = ({
+  token,
   userId,
   userProfileUrl,
   userName,
-  onPostAdded 
-}: { 
-  token: string | null, 
+  onPostAdded
+}: {
+  token: string | null,
   userId: number | null,
   userProfileUrl: string | null,
   userName: string | null,
-  onPostAdded: () => void 
+  onPostAdded: () => void
 }) => {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -156,24 +162,17 @@ const CreatePostForm = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.post('https://api-my.chevalierlabsas.org/forum', 
-        {
-          content,
-          userId,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.post('/forum', {
+        content,
+        userId,
+      });
 
       if (response.data.status !== 201) {
         throw new Error(response.data.message || 'Failed to create post');
       }
 
       setContent('');
-      onPostAdded(); // Refresh the list
+      onPostAdded();
 
     } catch (err) {
       setError((err as Error).message);
@@ -219,8 +218,7 @@ const CreatePostForm = ({
   );
 };
 
-// --- Modals for Editing/Deleting Forum Posts ---
-// (These are the same as before, just moved here)
+// --- Modals ---
 const EditForumModal = ({
   isOpen, onClose, token, onPostUpdated, post
 }: {
@@ -240,12 +238,7 @@ const EditForumModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.put(`https://api-my.chevalierlabsas.org/forum/${post.id}`,
-        { content },
-        {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }
-      );
+      const response = await api.put(`/forum/${post.id}`, { content });
       if (response.data.status !== 200) throw new Error(response.data.message || 'Failed to update post');
       onPostUpdated();
       onClose();
@@ -293,9 +286,7 @@ const DeleteForumModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.delete(`https://api-my.chevalierlabsas.org/forum/${post.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const response = await api.delete(`/forum/${post.id}`);
       if (response.data.status !== 200) throw new Error(response.data.message || 'Failed to delete post');
       onPostUpdated();
       onClose();
@@ -324,29 +315,31 @@ const DeleteForumModal = ({
   );
 };
 
-// --- Main Discussion Page Component ---
+// --- Main Page Component ---
 export default function DiscussionPage() {
   const [forums, setForums] = useState<Forum[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Get user info from localStorage
+
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [userProfileUrl, setUserProfileUrl] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
-  
-  // State for modals
+
   const [selectedForum, setSelectedForum] = useState<Forum | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  
-  // Get token and user info on mount
+
+  // --- Pagination State ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [limit, setLimit] = useState(10);
+
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUserId = localStorage.getItem('userId');
-    const storedProfileUrl = localStorage.getItem('profileUrl'); 
-    const storedName = localStorage.getItem('name'); 
+    const storedProfileUrl = localStorage.getItem('profileUrl');
+    const storedName = localStorage.getItem('name');
 
     if (!storedToken || !storedUserId) {
       setError('You are not authenticated.');
@@ -359,39 +352,33 @@ export default function DiscussionPage() {
     setUserName(storedName);
   }, []);
 
-  // --- Fetch all forums ---
-  const fetchForums = useCallback(async () => {
-    if (!token) {
-      return;
-    }
- 
+  const fetchForums = useCallback(async (page = 1) => {
+    if (!token) return;
+
     setError(null);
     try {
-      const response = await axios.get('https://api-my.chevalierlabsas.org/forum', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const response = await api.get(`/forum?page=${page}&limit=${limit}`);
       const data = response.data;
       if (data.status === 200 && Array.isArray(data.forums)) {
-        // Sort forums to show newest first
         setForums(data.forums.sort((a: Forum, b: Forum) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        setTotalPages(data.meta?.totalPages || 1);
+        setCurrentPage(page);
       } else {
         throw new Error(data.message || 'Failed to parse forums');
       }
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
-  }, [token]);
+  }, [token, limit]);
 
-  // Fetch data once token is set
   useEffect(() => {
     if (token) {
-      fetchForums();
+      fetchForums(1);
     }
   }, [token, fetchForums]);
 
-  // --- Modal Handlers for FORUMS ---
   const handleOpenForumEdit = (post: Forum) => {
     setSelectedForum(post);
     setIsEditModalOpen(true);
@@ -406,16 +393,14 @@ export default function DiscussionPage() {
       <h1 className="text-4xl text-neutral-900 mb-6">Discussion Forum</h1>
 
       <div className="max-w-3xl mx-auto">
-        {/* --- Create Post Form --- */}
         <CreatePostForm
           token={token}
           userId={userId}
           userProfileUrl={userProfileUrl}
           userName={userName}
-          onPostAdded={fetchForums}
+          onPostAdded={() => fetchForums(currentPage)}
         />
-      
-        {/* --- Forum Feed --- */}
+
         {isLoading ? (
           <div className="text-center text-neutral-600 py-12">Loading discussions...</div>
         ) : error ? (
@@ -423,34 +408,43 @@ export default function DiscussionPage() {
         ) : forums.length === 0 ? (
           <div className="text-center text-neutral-600 py-12">No discussions yet. Start one!</div>
         ) : (
-          forums.map((post) => (
-            <ForumCard 
-              key={post.id} 
-              post={post} 
-              currentUserId={userId}
-              onEditClick={handleOpenForumEdit}
-              onDeleteClick={handleOpenForumDelete}
+          <>
+            {forums.map((post) => (
+              <ForumCard
+                key={post.id}
+                post={post}
+                currentUserId={userId}
+                onEditClick={handleOpenForumEdit}
+                onDeleteClick={handleOpenForumDelete}
+              />
+            ))}
+            {/* Pagination Control */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={fetchForums}
+              limit={limit}
+              onLimitChange={setLimit}
             />
-          ))
+          </>
         )}
       </div>
 
-      {/* --- Modals --- */}
       {selectedForum && (
-        <EditForumModal 
+        <EditForumModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           token={token}
-          onPostUpdated={fetchForums}
+          onPostUpdated={() => fetchForums(currentPage)}
           post={selectedForum}
         />
       )}
       {selectedForum && (
-        <DeleteForumModal 
+        <DeleteForumModal
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}
           token={token}
-          onPostUpdated={fetchForums}
+          onPostUpdated={() => fetchForums(currentPage)}
           post={selectedForum}
         />
       )}

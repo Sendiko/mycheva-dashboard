@@ -1,12 +1,13 @@
-'use client'; 
+'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image'; // <-- PREVIEW FIX
-import Link from 'next/link'; // <-- PREVIEW FIX
-import { useParams } from 'next/navigation'; // <-- PREVIEW FIX
-import axios from 'axios';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import api from '@/lib/axios';
+import Pagination from '@/components/Pagination';
 
-// --- Types (Copied from main discussion page) ---
+// --- Types ---
 type User = {
   id: number;
   name: string;
@@ -22,6 +23,7 @@ type Reply = {
   forumId: number;
   content: string;
   createdAt: string;
+  updatedAt: string;
   user: User;
 };
 
@@ -30,6 +32,7 @@ type Forum = {
   userId: number;
   content: string;
   createdAt: string;
+  updatedAt: string;
   user: User;
   Replies: Reply[];
 };
@@ -39,7 +42,6 @@ const formatTimestamp = (dateString: string) => {
   if (!dateString) return 'N/A';
   try {
     const date = new Date(dateString);
-    // Formats to "Oct 27, 2025, 6:40 AM"
     return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -55,13 +57,13 @@ const formatTimestamp = (dateString: string) => {
 };
 
 // --- Reply Card Component ---
-const ReplyCard = ({ 
-  reply, 
+const ReplyCard = ({
+  reply,
   currentUserId,
   onEditClick,
   onDeleteClick
-}: { 
-  reply: Reply, 
+}: {
+  reply: Reply,
   currentUserId: number | null,
   onEditClick: (reply: Reply) => void,
   onDeleteClick: (reply: Reply) => void
@@ -82,7 +84,7 @@ const ReplyCard = ({
           target.src = `https://placehold.co/32x32/DEDEDE/424242?text=${reply.user.name.charAt(0)}`;
         }}
       />
-      
+
       {/* Content */}
       <div className="flex-1">
         <div className="flex items-center justify-between">
@@ -90,7 +92,12 @@ const ReplyCard = ({
             <span className="font-semibold text-body-md text-neutral-900">{reply.user.name}</span>
             <span className="text-body-sm text-neutral-500">@{reply.user.name}</span>
             <span className="text-body-sm text-neutral-500">·</span>
-            <span className="text-body-sm text-neutral-500">{formatTimestamp(reply.createdAt)}</span>
+            <span className="text-body-sm text-neutral-500">
+              {formatTimestamp(reply.createdAt)}
+              {reply.updatedAt && reply.createdAt !== reply.updatedAt && (
+                <span className="ml-1 text-neutral-400 italic">(edited)</span>
+              )}
+            </span>
           </div>
           {/* Edit/Delete for Replies */}
           {canEdit && (
@@ -133,23 +140,16 @@ const CreateReplyForm = ({
 
     setIsSubmitting(true);
     try {
-      const response = await axios.post('https://api-my.chevalierlabsas.org/replies',
-        {
-          content,
-          userId,
-          forumId,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-      
+      const response = await api.post('/replies', {
+        content,
+        userId,
+        forumId,
+      });
+
       if (response.data.status !== 201) {
         throw new Error(response.data.message || 'Failed to post reply');
       }
-      
+
       setContent('');
       onReplyAdded(); // Refresh the forum list
 
@@ -183,10 +183,9 @@ const CreateReplyForm = ({
 // --- Main Post Component (for detail page) ---
 const MainPostCard = ({ post }: { post: Forum }) => {
   return (
-     <div className="w-full bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden mb-6">
+    <div className="w-full bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden mb-6">
       {/* Card Header */}
       <div className="flex space-x-4 p-6">
-        {/* <Image ... /> */} {/* PREVIEW FIX */}
         <img
           src={post.user.profileUrl}
           alt={post.user.name}
@@ -204,7 +203,12 @@ const MainPostCard = ({ post }: { post: Forum }) => {
             <span className="font-semibold text-body-lg text-neutral-900">{post.user.name}</span>
             <span className="text-body-md text-neutral-500">@{post.user.name}</span>
           </div>
-          <span className="text-body-md text-neutral-500">{formatTimestamp(post.createdAt)}</span>
+          <span className="text-body-md text-neutral-500">
+            {formatTimestamp(post.createdAt)}
+            {post.updatedAt && post.createdAt !== post.updatedAt && (
+              <span className="ml-1 text-neutral-400 italic">(edited)</span>
+            )}
+          </span>
         </div>
       </div>
       {/* Card Body */}
@@ -214,17 +218,17 @@ const MainPostCard = ({ post }: { post: Forum }) => {
         </p>
       </div>
       {/* Reply Count */}
-       <div className="border-t border-neutral-200 px-6 py-4">
-         <span className="font-semibold text-body-md text-neutral-800">
-           {post.Replies.length} {post.Replies.length === 1 ? 'Reply' : 'Replies'}
-         </span>
-       </div>
+      <div className="border-t border-neutral-200 px-6 py-4">
+        <span className="font-semibold text-body-md text-neutral-800">
+          {post.Replies.length} {post.Replies.length === 1 ? 'Reply' : 'Replies'}
+        </span>
+      </div>
     </div>
   );
 };
 
 
-// --- NEW: Modal for Editing Reply ---
+// --- Modal for Editing Reply ---
 const EditReplyModal = ({
   isOpen, onClose, token, onPostUpdated, reply
 }: {
@@ -244,12 +248,7 @@ const EditReplyModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.put(`https://api-my.chevalierlabsas.org/replies/${reply.id}`,
-        { content },
-        {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }
-      );
+      const response = await api.put(`/replies/${reply.id}`, { content });
       if (response.data.status !== 200) throw new Error(response.data.message || 'Failed to update reply');
       onPostUpdated();
       onClose();
@@ -285,7 +284,7 @@ const EditReplyModal = ({
   );
 };
 
-// --- NEW: Modal for Deleting Reply ---
+// --- Modal for Deleting Reply ---
 const DeleteReplyModal = ({
   isOpen, onClose, token, onPostUpdated, reply
 }: {
@@ -298,9 +297,7 @@ const DeleteReplyModal = ({
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await axios.delete(`https://api-my.chevalierlabsas.org/replies/${reply.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const response = await api.delete(`/replies/${reply.id}`);
       if (response.data.status !== 200) throw new Error(response.data.message || 'Failed to delete reply');
       onPostUpdated();
       onClose();
@@ -331,23 +328,24 @@ const DeleteReplyModal = ({
 
 // --- Main Forum Detail Page Component ---
 export default function ForumDetailPage() {
-  const params = useParams(); // <-- PREVIEW FIX
-  const forumId = params?.forumId; // <-- PREVIEW FIX
+  const params = useParams();
+  const forumId = params?.forumId;
 
   const [forum, setForum] = useState<Forum | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Get user info from localStorage
+
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
-  
-  // State for modals
+
   const [selectedReply, setSelectedReply] = useState<Reply | null>(null);
   const [isReplyEditModalOpen, setIsReplyEditModalOpen] = useState(false);
   const [isReplyDeleteModalOpen, setIsReplyDeleteModalOpen] = useState(false);
 
-  // Get token and user info on mount
+  // --- Pagination State (Client-Side) ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(10);
+
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUserId = localStorage.getItem('userId');
@@ -361,18 +359,15 @@ export default function ForumDetailPage() {
     setUserId(Number(storedUserId));
   }, []);
 
-  // --- Fetch the specific forum post ---
   const fetchForumDetails = useCallback(async () => {
     if (!token || !forumId) {
       return;
     }
- 
+
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`https://api-my.chevalierlabsas.org/forum/${forumId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const response = await api.get(`/forum/${forumId}`);
       const data = response.data;
       if (data.status === 200 && data.forum) {
         setForum(data.forum);
@@ -382,18 +377,29 @@ export default function ForumDetailPage() {
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   }, [token, forumId]);
 
-  // Fetch data once token/forumId is set
   useEffect(() => {
     if (token && forumId) {
       fetchForumDetails();
     }
   }, [token, forumId, fetchForumDetails]);
 
-  // --- Modal Handlers for REPLIES ---
+  // --- Computed Pagination ---
+  const paginatedReplies = useMemo(() => {
+    if (!forum || !forum.Replies) return [];
+    const startIndex = (currentPage - 1) * limit;
+    return forum.Replies.slice(startIndex, startIndex + limit);
+  }, [forum, currentPage, limit]);
+
+  const totalPages = useMemo(() => {
+    if (!forum || !forum.Replies) return 0;
+    return Math.ceil(forum.Replies.length / limit);
+  }, [forum, limit]);
+
+
   const handleOpenReplyEdit = (reply: Reply) => {
     setSelectedReply(reply);
     setIsReplyEditModalOpen(true);
@@ -407,15 +413,10 @@ export default function ForumDetailPage() {
     <div className="max-w-3xl mx-auto">
       {/* Back Button */}
       <div className="mb-4">
-        {/* --- PREVIEW FIX: Replaced <Link> with <a> --- */}
-        <a href="/dashboard/forums" className="flex items-center space-x-2 text-body-md font-semibold text-primary-600 hover:text-primary-800">
-        {/* --- ORIGINAL CODE ---
-        <Link href="/dashboard/discussion" className="flex items-center space-x-2 text-body-md font-semibold text-primary-600 hover:text-primary-800">
-        */}
+        <Link href="/dashboard/forums" className="flex items-center space-x-2 text-body-md font-semibold text-primary-600 hover:text-primary-800">
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           <span>Back to all discussions</span>
-        {/* </Link> */}
-        </a>
+        </Link>
       </div>
 
       {isLoading ? (
@@ -428,7 +429,7 @@ export default function ForumDetailPage() {
         <>
           {/* --- Main Post --- */}
           <MainPostCard post={forum} />
-          
+
           {/* --- Create Reply Form --- */}
           <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-6 mb-6">
             <h3 className="text-h5 text-neutral-900 mb-4">Post a Reply</h3>
@@ -443,8 +444,8 @@ export default function ForumDetailPage() {
           {/* --- Replies Feed --- */}
           <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-6">
             <div className="space-y-4">
-              {forum.Replies.length > 0 ? (
-                forum.Replies.map((reply) => (
+              {paginatedReplies.length > 0 ? (
+                paginatedReplies.map((reply) => (
                   <ReplyCard
                     key={reply.id}
                     reply={reply}
@@ -454,16 +455,26 @@ export default function ForumDetailPage() {
                   />
                 ))
               ) : (
-                 <p className="text-center text-sm text-neutral-500 py-4">Be the first to reply!</p>
+                <p className="text-center text-sm text-neutral-500 py-4">Be the first to reply!</p>
               )}
             </div>
+            {/* Pagination Control */}
+            {totalPages > 1 && (
+              <div className="mt-6">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
           </div>
         </>
       )}
 
-      {/* --- NEW: Render Reply Modals --- */}
+      {/* --- Render Reply Modals --- */}
       {selectedReply && (
-        <EditReplyModal 
+        <EditReplyModal
           isOpen={isReplyEditModalOpen}
           onClose={() => setIsReplyEditModalOpen(false)}
           token={token}
@@ -472,7 +483,7 @@ export default function ForumDetailPage() {
         />
       )}
       {selectedReply && (
-        <DeleteReplyModal 
+        <DeleteReplyModal
           isOpen={isReplyDeleteModalOpen}
           onClose={() => setIsReplyDeleteModalOpen(false)}
           token={token}

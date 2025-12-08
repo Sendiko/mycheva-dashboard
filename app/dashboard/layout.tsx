@@ -14,7 +14,11 @@ const allMenuItems = [
   { id: 'roadmap', name: 'Roadmap', href: '/dashboard/roadmap', icon: '🗺️' },
   { id: 'discussion', name: 'Discussion Forum', href: '/dashboard/forums', icon: '💬' },
   { id: 'meetings', name: 'Meetings', href: '/dashboard/meetings', icon: '🤝' },
+  { id: 'assignments', name: 'Assignments', href: '/dashboard/assignments', icon: '📝' }, // Added Assignments
   { id: 'users', name: 'User Management', href: '/dashboard/users', icon: '👥' },
+  { id: 'roles', name: 'Roles', href: '/dashboard/roles', icon: '🛡️' },
+  { id: 'divisions', name: 'Divisions', href: '/dashboard/divisions', icon: '🏢' },
+  { id: 'app-versions', name: 'App Versions', href: '/dashboard/app-versions', icon: '📱' },
   { id: 'profile', name: 'Profile', href: '/dashboard/profile', icon: '👤' },
 ];
 
@@ -23,22 +27,20 @@ const getVisibleMenuItems = (roleId: number | null) => {
   if (roleId === null) return []; // No role, show nothing (or maybe just Profile?)
 
   switch (roleId) {
-    case 1: // Mentor
+    case 7: // Mentor
       return allMenuItems.filter(item =>
-        ['attendances', 'roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
+        ['attendances', 'announcements', 'roadmap', 'discussion', 'meetings', 'assignments', 'profile', 'users'].includes(item.id)
       );
-    case 2: // Student
+    case 8: // Student
       return allMenuItems.filter(item =>
-        ['roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
+        ['roadmap', 'discussion', 'meetings', 'assignments', 'profile'].includes(item.id)
       );
-    case 3: // Coordinator
-      return allMenuItems.filter(item =>
-        ['attendances', 'roadmap', 'discussion', 'meetings', 'users', 'profile'].includes(item.id)
-      );
-    case 4: // Core (Admin)
-      return allMenuItems; // Show all
+    case 1: // Core (Admin)
+      return allMenuItems; // Show all (now includes divisions)
     default:
-      return []; // Unknown role
+      return allMenuItems.filter(item =>
+        ['announcements', 'roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
+      ); // Unknown role
   }
 };
 
@@ -82,6 +84,7 @@ export default function DashboardLayout({
   const pathname = usePathname(); // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
   const [userRoleId, setUserRoleId] = useState<number | null>(null);
   const [isLoadingRole, setIsLoadingRole] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     // Clear all user data from localStorage
@@ -116,19 +119,42 @@ export default function DashboardLayout({
   const visibleMenuItems = getVisibleMenuItems(userRoleId);
 
   return (
-    <div className="flex h-screen bg-neutral-100 font-sans">
+    <div className="flex h-screen bg-neutral-100 font-sans overflow-hidden">
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/50 md:hidden transition-opacity"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 bg-white shadow-lg">
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+          md:relative md:translate-x-0
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
         <div className="h-full flex flex-col">
           {/* Logo Area */}
-          <Link className="h-20 flex items-center justify-center border-b border-neutral-200" href='/dashboard'>
-            <Image src="/image/logo.png" alt="Logo" width={40} height={40} />
-            <div className='m-1'></div>
-            <span className="text-xl font-bold text-primary-500">MyCheva</span>
-          </Link>
+          <div className="h-20 flex items-center justify-between px-4 border-b border-neutral-200">
+            <Link className="flex items-center justify-center flex-1" href='/dashboard'>
+              <Image src="/image/logo.png" alt="Logo" width={40} height={40} />
+              <div className='m-1'></div>
+              <span className="text-xl font-bold text-primary-500">MyCheva</span>
+            </Link>
+            {/* Close button for mobile */}
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="md:hidden p-2 text-neutral-500 hover:text-neutral-700"
+            >
+              ✕
+            </button>
+          </div>
 
           {/* Navigation Menu */}
-          <nav className="flex-1 space-y-2 p-4">
+          <nav className="flex-1 space-y-2 p-4 overflow-y-auto">
             {isLoadingRole ? (
               // Optional: Show a loading state while fetching role
               <div className="text-center text-neutral-500 py-4">Loading...</div>
@@ -154,9 +180,21 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Mobile Header */}
+        <header className="md:hidden bg-white border-b border-neutral-200 p-4 flex items-center justify-between flex-shrink-0">
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="p-2 -ml-2 text-neutral-700 hover:bg-neutral-100 rounded-lg"
+          >
+            <span className="text-xl">☰</span>
+          </button>
+          <span className="text-lg font-bold text-primary-500">MyCheva</span>
+          <div className="w-8"></div> {/* Spacer for centering */}
+        </header>
+
         {/* Page content */}
-        <div className="p-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">
           {children}
         </div>
       </main>
