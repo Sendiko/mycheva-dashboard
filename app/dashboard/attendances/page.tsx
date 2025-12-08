@@ -147,12 +147,12 @@ const AddAttendanceModal = ({
         setError(null);
         try {
           // Fetch Users
-          const userRes = await api.get('/user/all?students=true&detailed=true');
+          const userRes = await api.get('/user/all?students=true&detailed=true&limit=500');
           const userData = userRes.data;
           if (userData.status === 200) setUsers(userData.users);
 
           // Fetch Events
-          const eventRes = await api.get('/event');
+          const eventRes = await api.get('/event?limit=500');
           const eventData = eventRes.data;
           if (eventData.status === 200) setEvents(eventData.events);
 
@@ -169,6 +169,14 @@ const AddAttendanceModal = ({
   // Filter users based on selected event and search term
   const filteredUsers = useMemo(() => {
     let filtered = users;
+
+    // Filter by Division if an event is selected
+    if (selectedEventId) {
+      const selectedEvent = events.find(e => e.id === Number(selectedEventId));
+      if (selectedEvent) {
+        filtered = filtered.filter(user => user.UserDatum.Division.name === selectedEvent.Division.name);
+      }
+    }
 
     // Filter by Search Term
     if (userSearch) {
