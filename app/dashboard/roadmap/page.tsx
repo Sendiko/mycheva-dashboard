@@ -850,9 +850,9 @@ export default function RoadmapPage() {
     }
   }, [token, fetchRoadmaps]);
 
-  // --- NEW: Fetch user profile to get division ID for roleId 8 ---
+  // --- NEW: Fetch user profile to get division ID for roleId 8 and 7 ---
   useEffect(() => {
-    if (token && userId && roleId === 8) {
+    if (token && userId && (roleId === 8 || roleId === 7)) {
       const fetchUserProfile = async () => {
         try {
           const res = await api.get(`/userdata/${userId}`);
@@ -873,8 +873,8 @@ export default function RoadmapPage() {
   const processedRoadmaps = useMemo(() => {
     let filteredData = [...roadmaps];
 
-    // NEW: Filter by division for roleId 8
-    if (roleId === 8 && userDivisionId) {
+    // NEW: Filter by division for roleId 8 and 7
+    if ((roleId === 8 || roleId === 7) && userDivisionId) {
       filteredData = filteredData.filter(item => item.divisionId === userDivisionId);
     }
 
