@@ -1,8 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MyCheva Dashboard
 
-## Getting Started
+MyCheva Dashboard is a modern, responsive web application built to manage various aspects of the MyCheva platform, including user attendances, meetings, forums, assignments, and roadmaps. Use this dashboard to track user progress, manage content, and oversee administrative tasks.
 
-First, run the development server:
+## 🚀 Tech Stack
+
+This project is built with the following technologies:
+
+-   **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
+-   **Language**: [TypeScript](https://www.typescriptlang.org/)
+-   **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
+-   **Icons**: [Lucide React](https://lucide.dev/)
+-   **Markdown Rendering**: `react-markdown`, `remark-gfm`
+-   **HTTP Client**: `axios`
+
+## ✨ Key Features
+
+-   **Dashboard**: Overview of key metrics and activities.
+-   **Roadmap**: Visualize and manage project milestones.
+-   **Meetings**: Schedule and track meetings.
+-   **Attendances**: Monitor user attendance records.
+-   **Forums**: Discussion boards for community interaction.
+-   **Assignments**: Manage and grade user assignments.
+
+## 🛠️ Getting Started
+
+Follow these steps to set up the project locally.
+
+### Prerequisites
+
+Ensure you have the following installed:
+
+-   [Node.js](https://nodejs.org/) (Latest LTS version recommended)
+-   npm, yarn, pnpm, or bun
+
+### Installation
+
+1.  **Clone the repository:**
+
+    ```bash
+    git clone <repository-url>
+    cd mycheva-dashboard
+    ```
+
+2.  **Install dependencies:**
+
+    ```bash
+    npm install
+    # or
+    yarn install
+    # or
+    pnpm install
+    # or
+    bun install
+    ```
+
+3.  **Configure Environment Variables:**
+
+    Create a `.env.local` or `.env.development` file in the root directory. You will need to define the API base URL:
+
+    ```env
+    NEXT_PUBLIC_API_BASE_URL=https://api.your-domain.com
+    ```
+
+    > **Note:** Check `lib/axios.ts` to see how the token injection and base URL are handled.
+
+### Running the Development Server
+
+Start the development server on port `8080`:
 
 ```bash
 npm run dev
@@ -14,23 +78,56 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:8080](http://localhost:8080) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Building for Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To create an optimized production build:
 
-## Learn More
+```bash
+npm run build
+# or
+yarn build
+# or
+pnpm build
+# or
+bun build
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Start Production Server
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+To start the production server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run start
+# or
+yarn start
+# or
+pnpm start
+# or
+bun start
+```
 
-## Deploy on Vercel
+### Linting
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+To run the linter:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run lint
+```
+
+## 📂 Project Structure
+
+```
+mycheva-dashboard/
+├── app/                 # Next.js App Router pages and layouts
+│   ├── dashboard/       # Dashboard routes (assignments, forums, etc.)
+│   └── ...
+├── components/          # Reusable React components
+├── lib/                 # Utility functions and configurations (e.g., axios setup)
+├── public/              # Static assets (images, fonts, etc.)
+├── .env.development     # Development environment variables
+├── next.config.ts       # Next.js configuration
+├── package.json         # Project dependencies and scripts
+└── README.md            # Project documentation
+```

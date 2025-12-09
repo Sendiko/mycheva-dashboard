@@ -326,7 +326,7 @@ export default function DashboardPage() {
 
         if (attendanceRes) {
           const attendanceData = attendanceRes.data;
-          if (attendanceData.status === 200) attendanceCount = attendanceData.attendances.length;
+          if (attendanceData.status === 200) attendanceCount = attendanceData.meta.totalItems;
         }
 
         setStats([
