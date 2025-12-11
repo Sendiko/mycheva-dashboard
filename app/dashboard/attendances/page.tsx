@@ -65,6 +65,9 @@ type Attendance = {
   Event: {
     name: string;
     date: string;
+    Division: {
+      id: number;
+    };
   };
   user: {
     profileUrl: string;
@@ -90,7 +93,9 @@ type User = {
 type Event = {
   id: number;
   name: string;
+  date: string; // added date
   Division: {
+    id: number; // added id
     name: string,
   }
 };
@@ -373,7 +378,7 @@ const AddAttendanceModal = ({
   );
 };
 
-// --- NEW: EditAttendanceModal Component ---
+// --- EditAttendanceModal Component ---
 const EditAttendanceModal = ({
   isOpen,
   onClose,
@@ -533,7 +538,7 @@ const EditAttendanceModal = ({
   );
 };
 
-// --- NEW: DeleteConfirmationModal Component ---
+// --- DeleteConfirmationModal Component ---
 const DeleteConfirmationModal = ({
   isOpen,
   onClose,
@@ -637,38 +642,89 @@ export default function AttendancesPage() {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: 'ascending' });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+  const [roleId, setRoleId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [userDivisionId, setUserDivisionId] = useState<number | null>(null);
 
   // --- Pagination State ---
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalItems, setTotalItems] = useState(0);
   const [limit, setLimit] = useState(10);
+  // Derived state for client-side pagination
+  const [totalItems, setTotalItems] = useState(0);
 
   // --- NEW: State for Edit/Delete Modals ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
 
+  // --- NEW: Event Selection State ---
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
 
-  // --- Refactored fetchAttendances ---
-  const fetchAttendances = useCallback(async (page = 1) => {
+
+  // --- Fetch Events on Load ---
+  const fetchEvents = useCallback(async () => {
+    if (!token) return;
+    try {
+      const eventRes = await api.get('/event?limit=500');
+      const eventData = eventRes.data;
+      if (eventData.status === 200) {
+        setEvents(eventData.events);
+        // Default to first event if not selected
+        if (eventData.events.length > 0 && !selectedEventId) {
+          setSelectedEventId(eventData.events[0].id);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch events:", err);
+    }
+  }, [token, selectedEventId]);
+
+  // --- Refactored fetchAttendances (Fetches detailed event) ---
+  const fetchAttendances = useCallback(async () => {
     if (!token) {
       setError('You are not authenticated.');
       setIsLoading(false);
       return;
     }
 
+    if (!selectedEventId) {
+      // If no event selected (and events loaded), wait or do nothing
+      // Or if events list is empty, just clear attendances
+      if (events.length === 0 && !isLoading) {
+        setAttendances([]);
+      }
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const res = await api.get(`/attendance?page=${page}&limit=${limit}`);
+      // Use the new endpoint: /event/:id
+      const res = await api.get(`/event/${selectedEventId}`);
 
       const data = res.data;
 
-      if (data.status === 200 && Array.isArray(data.attendances)) {
-        setAttendances(data.attendances);
-        setTotalPages(data.meta?.totalPages || 1);
-        setTotalItems(data.meta?.totalItems || 0);
-        setCurrentPage(page);
+      if (data.status === 200 && data.event && Array.isArray(data.event.Attendances)) {
+        const fetchedAttendances = data.event.Attendances.map((item: any) => ({
+          ...item,
+          // Inject Event data from parent since it's not nested in items anymore
+          Event: {
+            name: data.event.name,
+            date: data.event.date,
+            Division: { id: data.event.divisionId }, // Note: divisionId in event object
+          },
+          // Map fullname to fullName
+          user: {
+            ...item.user,
+            UserDatum: {
+              ...item.user.UserDatum,
+              fullName: item.user.UserDatum?.fullname || item.user.UserDatum?.fullName,
+            }
+          }
+        }));
+
+        setAttendances(fetchedAttendances);
+        setTotalItems(fetchedAttendances.length);
         setError(null);
       } else {
         throw new Error(data.message || 'Failed to parse data');
@@ -678,7 +734,7 @@ export default function AttendancesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [token, limit]); // Depends on token and limit
+  }, [token, selectedEventId, events.length]); // Depends on selectedEventId
 
   // --- useEffect to get token and initial data ---
   useEffect(() => {
@@ -691,19 +747,62 @@ export default function AttendancesPage() {
       return;
     }
     setToken(storedToken);
+    const storedRoleId = localStorage.getItem('roleId');
+    if (storedRoleId) setRoleId(parseInt(storedRoleId, 10));
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) setUserId(parseInt(storedUserId, 10));
   }, []);
 
-  // --- useEffect to fetch data once token is set ---
+  // --- useEffect to fetch events once token is set ---
   useEffect(() => {
     if (token) {
-      fetchAttendances(1);
+      fetchEvents();
     }
-  }, [token, fetchAttendances]);
+  }, [token, fetchEvents]);
+
+  // --- useEffect to fetch attendances when selectedEventId changes ---
+  useEffect(() => {
+    if (token && selectedEventId) {
+      fetchAttendances();
+    }
+  }, [token, selectedEventId, fetchAttendances]);
 
 
-  // --- useMemo to process data for search and sort ---
+  // --- NEW: Fetch user profile to get division ID for roleId 8 and 7 ---
+  useEffect(() => {
+    if (token && userId && (roleId === 8 || roleId === 7)) {
+      const fetchUserProfile = async () => {
+        try {
+          const res = await api.get(`/userdata/${userId}`);
+          const data = res.data;
+          if (data.status === 200 && data.user && data.user.UserDatum) {
+            setUserDivisionId(data.user.UserDatum.divisionId);
+          }
+        } catch (err) {
+          console.error('Failed to fetch user profile for division filtering:', err);
+        }
+      };
+      fetchUserProfile();
+    }
+  }, [token, userId, roleId]);
+
+
+  // --- useMemo to process data for search, sort AND PAGINATION ---
   const processedAttendances = useMemo(() => {
     let filteredData = [...attendances];
+
+    // NEW: Filter by division for roleId 8 and 7
+    // Even though we select event, we might want to double check if the user is allowed to see data for this division??
+    // Actually, if fetching /event/id succeeds, maybe backend handles auth.
+    // But let's keep client side filter if needed.
+    if ((roleId === 8 || roleId === 7) && userDivisionId) {
+      // Filter if the Event's division doesn't match?
+      // Since all attendances belong to the SAME event, we either show all or none.
+      if (filteredData.length > 0 && filteredData[0].Event.Division.id !== userDivisionId) {
+        // If the event itself is not in user's division, maybe hide?
+        // But let's assume the user selects an eligible event from the dropdown (we should filter dropdown too)
+      }
+    }
 
     // 1. Filter data based on search term
     if (searchTerm) {
@@ -731,6 +830,8 @@ export default function AttendancesPage() {
 
         if (sortConfig.key === 'Event.date') {
           comparison = new Date(aValue).getTime() - new Date(bValue).getTime();
+        } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+          comparison = aValue.localeCompare(bValue);
         } else if (aValue > bValue) {
           comparison = 1;
         } else if (aValue < bValue) {
@@ -741,8 +842,32 @@ export default function AttendancesPage() {
       });
     }
 
-    return filteredData;
-  }, [attendances, searchTerm, sortConfig]);
+    // 3. Client-side Pagination
+    const startIndex = (currentPage - 1) * limit;
+    const endIndex = startIndex + limit;
+    return filteredData.slice(startIndex, endIndex);
+
+  }, [attendances, searchTerm, sortConfig, currentPage, limit, roleId, userDivisionId]);
+
+  // Derived Total Pages based on filtered data size (or total fetched)
+  // Actually, pagination usually runs on filtered result size?
+  // Let's count filtered size for pagination.
+  const filteredCount = useMemo(() => {
+    let filtered = [...attendances];
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter(item =>
+        (item.user.UserDatum.fullName || item.user.name).toLowerCase().includes(lowerSearch) ||
+        item.Event.name.toLowerCase().includes(lowerSearch) ||
+        formatDate(item.Event.date).toLowerCase().includes(lowerSearch) ||
+        item.status.toLowerCase().includes(lowerSearch)
+      );
+    }
+    return filtered.length;
+  }, [attendances, searchTerm]);
+
+  const displayedTotalPages = Math.ceil(filteredCount / limit) || 1;
+
 
   // --- Function to handle sort clicks ---
   const requestSort = (key: SortKey) => {
@@ -788,9 +913,31 @@ export default function AttendancesPage() {
           <span>Add New</span>
         </button>
       </div>
-      {/* --- Top Bar: Search and Add Button --- */}
-      <div className="mb-4">
-        <div className="relative">
+
+      {/* --- Top Bar: Event Selection & Search --- */}
+      <div className="mb-4 flex flex-col md:flex-row gap-4">
+        {/* Event Selector */}
+        <div className="w-full md:w-1/3">
+          <select
+            value={selectedEventId || ''}
+            onChange={(e) => {
+              const id = Number(e.target.value);
+              setSelectedEventId(id);
+              setCurrentPage(1); // Reset page on event change
+            }}
+            className="w-full rounded-lg border border-neutral-300 px-4 py-2.5 text-body-md text-neutral-800 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+          >
+            <option value="" disabled>Select Event</option>
+            {events.map(event => (
+              <option key={event.id} value={event.id}>
+                {event.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative w-full md:w-2/3">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3">
             <svg className="h-5 w-5 text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -798,10 +945,13 @@ export default function AttendancesPage() {
           </span>
           <input
             type="text"
-            placeholder="Search by name, type, details, or date..."
+            placeholder="Search by name, status..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full max-w-sm rounded-lg border border-neutral-300 py-2 pl-10 pr-4 text-body-md text-neutral-800 placeholder-neutral-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // Reset page on search
+            }}
+            className="w-full rounded-lg border border-neutral-300 py-2.5 pl-10 pr-4 text-body-md text-neutral-800 placeholder-neutral-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
           />
         </div>
       </div>
@@ -823,6 +973,7 @@ export default function AttendancesPage() {
                   Person {getSortIcon('user.UserDatum.fullName')}
                 </div>
               </th>
+              {/* Event Name - Still relevant if we want to confirm what we are looking at, but redundant if selected above. Keeping for now. */}
               <th
                 className="p-4 cursor-pointer hover:bg-primary-100 transition-colors"
                 onClick={() => requestSort('Event.name')}
@@ -854,8 +1005,8 @@ export default function AttendancesPage() {
 
           {/* Table Body: Conditional Rendering */}
           <tbody>
-            {isLoading && (!attendances || attendances.length === 0) ? (
-              // --- Loading State (only show if table is empty) ---
+            {isLoading ? (
+              // --- Loading State ---
               <tr>
                 <td colSpan={6} className="p-8 text-center text-neutral-600">
                   Loading attendance data...
@@ -872,7 +1023,7 @@ export default function AttendancesPage() {
               // --- Empty State (different message based on context) ---
               <tr>
                 <td colSpan={6} className="p-8 text-center text-neutral-600">
-                  {searchTerm ? 'No results found matching your search.' : 'No attendance records found.'}
+                  {searchTerm ? 'No results found matching your search.' : 'No attendance records found for this event.'}
                 </td>
               </tr>
             ) : (
@@ -885,9 +1036,9 @@ export default function AttendancesPage() {
                     ${index % 2 === 0 ? 'bg-white' : 'bg-neutral-50'}
                   `}
                 >
-                  {/* Number */}
+                  {/* Number - (Calculated based on page) */}
                   <td className="p-4 font-medium text-neutral-500">
-                    {index + 1}
+                    {(currentPage - 1) * limit + index + 1}
                   </td>
 
                   {/* Person (Photo + Name) */}
@@ -959,11 +1110,11 @@ export default function AttendancesPage() {
       {/* Pagination Control */}
       <Pagination
         currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={fetchAttendances}
+        totalPages={displayedTotalPages}
+        onPageChange={setCurrentPage}
         limit={limit}
         onLimitChange={setLimit}
-        totalItems={totalItems}
+        totalItems={filteredCount}
       />
 
       {/* --- Render Modals --- */}
@@ -971,7 +1122,7 @@ export default function AttendancesPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         token={token}
-        onAttendanceAdded={() => fetchAttendances(currentPage)}
+        onAttendanceAdded={() => fetchAttendances()}
       />
 
       {/* --- NEW: Render Edit/Delete Modals --- */}
@@ -983,7 +1134,7 @@ export default function AttendancesPage() {
             setSelectedAttendance(null);
           }}
           token={token}
-          onAttendanceUpdated={() => fetchAttendances(currentPage)}
+          onAttendanceUpdated={() => fetchAttendances()}
           attendance={selectedAttendance}
         />
       )}
@@ -996,7 +1147,7 @@ export default function AttendancesPage() {
             setSelectedAttendance(null);
           }}
           token={token}
-          onAttendanceDeleted={() => fetchAttendances(currentPage)}
+          onAttendanceDeleted={() => fetchAttendances()}
           attendance={selectedAttendance}
         />
       )}
