@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import api from '@/lib/axios';
 import QRCode from 'react-qr-code';
 import Pagination from '@/components/Pagination';
+import MeetingTimeline from './MeetingTimeline';
 
 // --- Helper function to format the date ---
 const formatDate = (dateString: string) => {
@@ -957,6 +958,9 @@ export default function MeetingsPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
 
+  // --- Stats State for Student Timeline ---
+  const [attendanceStats, setAttendanceStats] = useState({ percentage: 0, present: 0, total: 0 });
+
 
   // --- Refactored fetchMeetings ---
   const fetchMeetings = useCallback(async (page = 1) => {
@@ -1004,6 +1008,27 @@ export default function MeetingsPage() {
     }
   }, [token, userId]);
 
+  // --- NEW: Fetch Attendance Stats for Student ---
+  const fetchAttendanceStats = useCallback(async () => {
+    if (!token || !userId) return;
+
+    try {
+      const res = await api.get(`/attendance?limit=500`);
+      const data = res.data;
+
+      if (data.status === 200 && Array.isArray(data.attendances)) {
+        const myAttendances = data.attendances.filter((a: any) => a.userId === userId);
+        const total = myAttendances.length;
+        const present = myAttendances.filter((a: any) => a.status.toLowerCase() === 'present').length;
+        const percentage = total > 0 ? (present / total) * 100 : 0;
+
+        setAttendanceStats({ percentage, present, total });
+      }
+    } catch (err) {
+      console.error("Failed to fetch attendance stats:", err);
+    }
+  }, [token, userId]);
+
   // --- useEffect to get token and initial data ---
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -1026,8 +1051,11 @@ export default function MeetingsPage() {
       if (userId) {
         fetchUserDivision();
       }
+      if (roleId === 8 && userId) { // Fetch stats for students
+        fetchAttendanceStats();
+      }
     }
-  }, [token, userId, fetchMeetings, fetchUserDivision]);
+  }, [token, userId, roleId, fetchMeetings, fetchUserDivision, fetchAttendanceStats]);
 
 
   // --- useMemo to process data for search and sort ---
@@ -1084,7 +1112,7 @@ export default function MeetingsPage() {
     }
 
     return filteredData;
-  }, [meetings, searchTerm, sortConfig]);
+  }, [meetings, searchTerm, sortConfig, roleId, userDivisionId]);
 
   // --- Function to handle sort clicks ---
   const requestSort = (key: SortKey) => {
@@ -1123,6 +1151,56 @@ export default function MeetingsPage() {
     setIsQrModalOpen(true);
   };
 
+
+  // --- RENDER STUDENT TIMELINE VIEW ---
+  if (roleId === 8) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl text-neutral-900">My Meetings</h1>
+        </div>
+
+        {/* Search Bar for Student */}
+        <div className="mb-4">
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+              <svg className="h-5 w-5 text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              placeholder="Search meetings..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full max-w-sm rounded-lg border border-neutral-300 py-2 pl-10 pr-4 text-body-md text-neutral-800 placeholder-neutral-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+            />
+          </div>
+        </div>
+
+        {isLoading && (!meetings || meetings.length === 0) ? (
+          <div className="py-20 text-center text-neutral-600">Loading meetings...</div>
+        ) : (
+          <MeetingTimeline meetings={processedMeetings} attendanceStats={attendanceStats} />
+        )}
+
+        {/* Pagination Control for Timeline? (If limited by fetchMeetings limit) */}
+        <div className="mt-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={fetchMeetings}
+            limit={limit}
+            onLimitChange={setLimit}
+            totalItems={totalItems}
+          />
+        </div>
+      </div>
+    );
+  }
+
+
+  // --- RENDER DEFAULT TABLE VIEW (Admin/Mentor) ---
   return (
     <div>
       {/* --- Top Bar: Header and Add Button --- */}
@@ -1298,16 +1376,6 @@ export default function MeetingsPage() {
                         >
                           <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-
-                        <button
-                          onClick={() => handleOpenQrModal(item)}
-                          title="QR Code"
-                          className="text-neutral-500 hover:text-primary-600 transition-colors mr-2"
-                        >
-                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h6v6H3V3zM15 3h6v6h-6V3zM3 15h6v6H3v-6zM8 8h8v8H8V8zM17 17h4v4h-4v-4z" />
                           </svg>
                         </button>
                       </div>

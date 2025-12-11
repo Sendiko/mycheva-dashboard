@@ -45,6 +45,7 @@ jobs:
           script: |
             cd mycheva-dashboard/
             git pull origin deployment
+            export PATH=/home/sendiko/.nvm/versions/node/v24.11.1/bin:$PATH
             /home/sendiko/.nvm/versions/node/v24.11.1/bin/npm install --omit=dev 
             /home/sendiko/.nvm/versions/node/v24.11.1/bin/npm run build 
             systemctl restart mycheva-dashboard

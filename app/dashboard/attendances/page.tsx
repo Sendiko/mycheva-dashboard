@@ -14,8 +14,8 @@ const formatDate = (dateString: string) => {
     // Formats the date to "Oct 27, 2025"
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+      month: 'short', // "Oct"
+      day: 'numeric', // "27"
     });
   } catch (error) {
     console.error("Failed to format date:", dateString, error);
@@ -792,16 +792,8 @@ export default function AttendancesPage() {
     let filteredData = [...attendances];
 
     // NEW: Filter by division for roleId 8 and 7
-    // Even though we select event, we might want to double check if the user is allowed to see data for this division??
-    // Actually, if fetching /event/id succeeds, maybe backend handles auth.
-    // But let's keep client side filter if needed.
     if ((roleId === 8 || roleId === 7) && userDivisionId) {
-      // Filter if the Event's division doesn't match?
-      // Since all attendances belong to the SAME event, we either show all or none.
-      if (filteredData.length > 0 && filteredData[0].Event.Division.id !== userDivisionId) {
-        // If the event itself is not in user's division, maybe hide?
-        // But let's assume the user selects an eligible event from the dropdown (we should filter dropdown too)
-      }
+      filteredData = filteredData.filter(item => item.Event.Division && item.Event.Division.id === userDivisionId);
     }
 
     // 1. Filter data based on search term
@@ -830,8 +822,6 @@ export default function AttendancesPage() {
 
         if (sortConfig.key === 'Event.date') {
           comparison = new Date(aValue).getTime() - new Date(bValue).getTime();
-        } else if (typeof aValue === 'string' && typeof bValue === 'string') {
-          comparison = aValue.localeCompare(bValue);
         } else if (aValue > bValue) {
           comparison = 1;
         } else if (aValue < bValue) {
@@ -849,11 +839,14 @@ export default function AttendancesPage() {
 
   }, [attendances, searchTerm, sortConfig, currentPage, limit, roleId, userDivisionId]);
 
-  // Derived Total Pages based on filtered data size (or total fetched)
-  // Actually, pagination usually runs on filtered result size?
-  // Let's count filtered size for pagination.
+  // Derived Total Pages based on filtered data (for client-side)
+  // We need to count the filtered items BEFORE slicing
   const filteredCount = useMemo(() => {
     let filtered = [...attendances];
+    // Division Filter
+    if ((roleId === 8 || roleId === 7) && userDivisionId) {
+      filtered = filtered.filter(item => item.Event.Division && item.Event.Division.id === userDivisionId);
+    }
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter(item =>
@@ -864,7 +857,7 @@ export default function AttendancesPage() {
       );
     }
     return filtered.length;
-  }, [attendances, searchTerm]);
+  }, [attendances, searchTerm, roleId, userDivisionId]);
 
   const displayedTotalPages = Math.ceil(filteredCount / limit) || 1;
 
@@ -895,7 +888,6 @@ export default function AttendancesPage() {
     setSelectedAttendance(item);
     setIsDeleteModalOpen(true);
   };
-
 
   return (
     <div>
@@ -947,10 +939,7 @@ export default function AttendancesPage() {
             type="text"
             placeholder="Search by name, status..."
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1); // Reset page on search
-            }}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-lg border border-neutral-300 py-2.5 pl-10 pr-4 text-body-md text-neutral-800 placeholder-neutral-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
           />
         </div>
@@ -1122,7 +1111,7 @@ export default function AttendancesPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         token={token}
-        onAttendanceAdded={() => fetchAttendances()}
+        onAttendanceAdded={fetchAttendances}
       />
 
       {/* --- NEW: Render Edit/Delete Modals --- */}
@@ -1134,7 +1123,7 @@ export default function AttendancesPage() {
             setSelectedAttendance(null);
           }}
           token={token}
-          onAttendanceUpdated={() => fetchAttendances()}
+          onAttendanceUpdated={fetchAttendances}
           attendance={selectedAttendance}
         />
       )}
@@ -1147,7 +1136,7 @@ export default function AttendancesPage() {
             setSelectedAttendance(null);
           }}
           token={token}
-          onAttendanceDeleted={() => fetchAttendances()}
+          onAttendanceDeleted={fetchAttendances}
           attendance={selectedAttendance}
         />
       )}
