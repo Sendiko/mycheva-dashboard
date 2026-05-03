@@ -148,12 +148,19 @@ export default function DashboardLayout({
               <div className="text-center text-neutral-500 py-4">Loading...</div>
             ) : (
               // Map over dynamic menu items
-              menus.map((item) => (
-                <SidebarLink key={item.id} href={item.path}>
-                  <span>{iconMap[item.id] || '🔹'}</span>
-                  <span>{item.name}</span>
+              <>
+                {menus.map((item) => (
+                  <SidebarLink key={item.id} href={item.path}>
+                    <span>{iconMap[item.id] || '🔹'}</span>
+                    <span>{item.name}</span>
+                  </SidebarLink>
+                ))}
+                {/* Static Profile Menu Item */}
+                <SidebarLink href="/dashboard/profile">
+                  <span>{iconMap['profile']}</span>
+                  <span>Profile</span>
                 </SidebarLink>
-              ))
+              </>
             )}
           </nav>
 
