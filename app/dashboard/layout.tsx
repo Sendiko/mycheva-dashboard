@@ -7,42 +7,28 @@ import { usePathname } from 'next/navigation'; // <-- PREVIEW FIX: Commented out
 import { useRouter } from 'next/navigation'; // <-- PREVIEW FIX: Commented out for the preview environment.
 
 
-// --- Define ALL possible menu items ---
-const allMenuItems = [
-  { id: 'attendances', name: 'Attendances', href: '/dashboard/attendances', icon: '📅' },
-  { id: 'announcements', name: 'Announcements', href: '/dashboard/announcements', icon: '📢' },
-  { id: 'roadmap', name: 'Roadmap', href: '/dashboard/roadmap', icon: '🗺️' },
-  { id: 'discussion', name: 'Discussion Forum', href: '/dashboard/forums', icon: '💬' },
-  { id: 'meetings', name: 'Meetings', href: '/dashboard/meetings', icon: '🤝' },
-  { id: 'assignments', name: 'Assignments', href: '/dashboard/assignments', icon: '📝' }, // Added Assignments
-  { id: 'users', name: 'User Management', href: '/dashboard/users', icon: '👥' },
-  { id: 'roles', name: 'Roles', href: '/dashboard/roles', icon: '🛡️' },
-  { id: 'divisions', name: 'Divisions', href: '/dashboard/divisions', icon: '🏢' },
-  { id: 'app-versions', name: 'App Versions', href: '/dashboard/app-versions', icon: '📱' },
-  { id: 'profile', name: 'Profile', href: '/dashboard/profile', icon: '👤' },
-];
+import api from '@/lib/axios';
 
-// --- Function to determine visible items based on roleId ---
-const getVisibleMenuItems = (roleId: number | null) => {
-  if (roleId === null) return []; // No role, show nothing (or maybe just Profile?)
-
-  switch (roleId) {
-    case 7: // Mentor
-      return allMenuItems.filter(item =>
-        ['attendances', 'announcements', 'roadmap', 'discussion', 'meetings', 'assignments', 'profile', 'users'].includes(item.id)
-      );
-    case 8: // Student
-      return allMenuItems.filter(item =>
-        ['roadmap', 'discussion', 'meetings', 'assignments', 'profile'].includes(item.id)
-      );
-    case 1: // Core (Admin)
-      return allMenuItems; // Show all (now includes divisions)
-    default:
-      return allMenuItems.filter(item =>
-        ['announcements', 'roadmap', 'discussion', 'meetings', 'profile'].includes(item.id)
-      ); // Unknown role
-  }
+const iconMap: Record<string, string> = {
+  attendances: '📅',
+  announcements: '📢',
+  roadmap: '🗺️',
+  discussion: '💬',
+  forums: '💬',
+  meetings: '🤝',
+  assignments: '📝',
+  users: '👥',
+  roles: '🛡️',
+  divisions: '🏢',
+  'app-versions': '📱',
+  profile: '👤',
 };
+
+interface MenuItem {
+  id: string;
+  name: string;
+  path: string;
+}
 
 
 // --- SidebarLink Component (with Preview Fixes) ---
@@ -82,7 +68,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname(); // <-- PREVIEW FIX: Commented out. Uncomment in your local project.
-  const [userRoleId, setUserRoleId] = useState<number | null>(null);
+  const [menus, setMenus] = useState<MenuItem[]>([]);
   const [isLoadingRole, setIsLoadingRole] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -90,11 +76,13 @@ export default function DashboardLayout({
     // Clear all user data from localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
+    localStorage.removeItem('roleId');
+    localStorage.removeItem('role');
 
     router.push('/login');
   };
 
-  // --- Get roleId from localStorage on mount ---
+  // --- Get token and fetch menus on mount ---
   useEffect(() => {
     // Verify authentication token first. If missing/empty, force redirect to /login.
     const token = localStorage.getItem('token');
@@ -104,19 +92,19 @@ export default function DashboardLayout({
       return; // stop further processing in this effect
     }
 
-    const storedRoleId = localStorage.getItem('roleId');
-    if (storedRoleId) {
-      setUserRoleId(parseInt(storedRoleId, 10)); // Convert string to number
-    } else {
-      console.error("Role ID not found in localStorage.");
-      // Optionally you could also redirect here, but token exists so let user see limited UI
-    }
-
-    setIsLoadingRole(false);
-  }, []); // Empty dependency array means run once on mount
-
-  // --- Filter menu items based on the fetched role ---
-  const visibleMenuItems = getVisibleMenuItems(userRoleId);
+    api.get('/menus')
+      .then((res) => {
+        if (res.data.status === 200 && res.data.menus) {
+          setMenus(res.data.menus);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch menus", err);
+      })
+      .finally(() => {
+        setIsLoadingRole(false);
+      });
+  }, [router]); 
 
   return (
     <div className="flex h-screen bg-neutral-100 font-sans overflow-hidden">
@@ -159,10 +147,10 @@ export default function DashboardLayout({
               // Optional: Show a loading state while fetching role
               <div className="text-center text-neutral-500 py-4">Loading...</div>
             ) : (
-              // Map over VISIBLE menu items
-              visibleMenuItems.map((item) => (
-                <SidebarLink key={item.name} href={item.href}>
-                  <span>{item.icon}</span>
+              // Map over dynamic menu items
+              menus.map((item) => (
+                <SidebarLink key={item.id} href={item.path}>
+                  <span>{iconMap[item.id] || '🔹'}</span>
                   <span>{item.name}</span>
                 </SidebarLink>
               ))

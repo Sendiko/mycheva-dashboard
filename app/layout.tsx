@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google'; // 1. Import the font
+import { Toaster } from 'react-hot-toast';
 import './globals.css'; // <-- PREVIEW FIX: Commented out for preview
 
 // 2. Configure the font with all the weights from your style guide
@@ -25,7 +26,10 @@ export default function RootLayout({
   return (
     // 4. Apply the variable to the <html> tag
     <html lang="en" className={`${poppins.variable}`}> 
-      <body className={poppins.className}>{children}</body>
+      <body className={poppins.className}>
+        {children}
+        <Toaster position="top-right" />
+      </body>
     </html>
   );
 }

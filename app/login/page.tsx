@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import api from '@/lib/axios';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Lock, User } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode';
 
 export default function LoginPage() {
   const [name, setName] = useState('');
@@ -28,9 +29,13 @@ export default function LoginPage() {
       if (data.status === 200 && data.token) {
         setSuccess(data.message || 'Login successful!');
 
+        // Decode the token to get user info including role and roleId
+        const decodedToken: any = jwtDecode(data.token);
+
         localStorage.setItem('token', data.token);
-        localStorage.setItem('userId', data.user.id);
-        localStorage.setItem('roleId', data.user.roleId);
+        localStorage.setItem('userId', decodedToken.id.toString());
+        localStorage.setItem('roleId', decodedToken.roleId.toString());
+        localStorage.setItem('role', decodedToken.role);
 
         setTimeout(() => {
           router.push('/dashboard');

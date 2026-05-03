@@ -319,14 +319,12 @@ export default function DashboardPage() {
         let userCount = 0;
         let attendanceCount = 0;
 
-        if (usersRes) {
-          // @ts-ignore
-          userCount = usersRes.data.meta.totalItems;
+        if (usersRes && usersRes.data) {
+          userCount = usersRes.data.meta?.totalItems ?? (Array.isArray(usersRes.data.users) ? usersRes.data.users.length : 0);
         }
 
-        if (attendanceRes) {
-          const attendanceData = attendanceRes.data;
-          if (attendanceData.status === 200) attendanceCount = attendanceData.meta.totalItems;
+        if (attendanceRes && attendanceRes.data) {
+          attendanceCount = attendanceRes.data.meta?.totalItems ?? (Array.isArray(attendanceRes.data.attendances) ? attendanceRes.data.attendances.length : 0);
         }
 
         setStats([
